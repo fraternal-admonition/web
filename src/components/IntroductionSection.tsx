@@ -50,7 +50,7 @@ export default function IntroductionSection({ onOpenModal }: IntroductionSection
             >
               <div className="absolute top-0 left-0 w-12 h-1 bg-gradient-to-r from-[#C19A43] to-transparent rounded-tl-2xl" />
               <p className="text-lg text-[#222] leading-[1.8] font-body-serif">
-                It is a call to moral action in today's world: the responsibility to speak truthfully when power denies justice, and to do so in a way that still honors the one who has done wrong.
+                It is a call to moral action in today&apos;s world: the responsibility to speak truthfully when power denies justice, and to do so in a way that still honors the one who has done wrong.
               </p>
             </motion.div>
 
@@ -62,7 +62,7 @@ export default function IntroductionSection({ onOpenModal }: IntroductionSection
             >
               <div className="absolute top-0 left-0 w-12 h-1 bg-gradient-to-r from-[#004D40] to-transparent rounded-tl-2xl" />
               <p className="text-lg text-[#222] leading-[1.8] font-body-serif">
-                The project's first expression is the book <span className="italic font-semibold text-[#C19A43]">Letters to Goliath.</span> After more than 25 years of seeking justice through courts and institutions, a Croatian entrepreneur who suffered great injustice now turns his personal struggle into a universal voice.
+                The project&apos;s first expression is the book <span className="italic font-semibold text-[#C19A43]">Letters to Goliath.</span> After more than 25 years of seeking justice through courts and institutions, a Croatian entrepreneur who suffered great injustice now turns his personal struggle into a universal voice.
               </p>
             </motion.div>
 
