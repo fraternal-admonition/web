@@ -31,8 +31,8 @@ export default async function DashboardPage() {
           </h1>
           <p className="text-[#666] leading-relaxed mb-6">
             You have successfully signed in to Fraternal Admonition. This is
-            your personal dashboard where you'll be able to manage your contest
-            submissions, reviews, and more.
+            your personal dashboard where you&apos;ll be able to manage your
+            contest submissions, reviews, and more.
           </p>
 
           <div className="bg-[#F9F9F7] rounded-lg p-6">
