@@ -104,11 +104,7 @@ export default function Navbar({ onOpenModal }: NavbarProps) {
 
             {/* Desktop CTA Buttons / User Menu */}
             <div className="hidden md:flex items-center gap-4">
-              {loading ? (
-                <div className="flex items-center gap-3">
-                  <div className="text-sm text-[#666]">Loading...</div>
-                </div>
-              ) : user ? (
+              {user ? (
                 <div className="flex items-center gap-3">
                   <Link
                     href="/dashboard"
@@ -133,6 +129,10 @@ export default function Navbar({ onOpenModal }: NavbarProps) {
                   >
                     {signingOut ? "Signing out..." : "Sign Out"}
                   </button>
+                </div>
+              ) : loading ? (
+                <div className="flex items-center gap-3">
+                  <div className="text-sm text-[#666]">Loading...</div>
                 </div>
               ) : (
                 <div className="flex items-center gap-3">

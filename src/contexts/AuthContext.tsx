@@ -44,29 +44,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       `[AuthContext] Fetching profile for user: ${userId}, retries left: ${retries}`
     );
     
-    // Ensure we have an active session before fetching
-    const { data: { session: currentSession } } = await supabase.auth.getSession();
-    if (!currentSession) {
-      console.error("[AuthContext] No active session, cannot fetch profile");
-      if (retries > 0) {
-        console.log("[AuthContext] Waiting for session...");
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        return fetchProfile(userId, retries - 1);
-      }
-      return null;
-    }
-    
-    console.log("[AuthContext] Session verified, fetching profile...");
-    
     try {
-      const { data, error } = await supabase
+      // Add timeout to prevent hanging
+      const sessionPromise = supabase.auth.getSession();
+      const timeoutPromise = new Promise<null>((_, reject) =>
+        setTimeout(() => reject(new Error("Session check timeout")), 3000)
+      );
+      
+      const { data: { session: currentSession } } = await Promise.race([
+        sessionPromise,
+        timeoutPromise.then(() => ({ data: { session: null } }))
+      ]) as Awaited<ReturnType<typeof supabase.auth.getSession>>;
+      
+      if (!currentSession) {
+        console.error("[AuthContext] No active session found");
+        if (retries > 0) {
+          console.log("[AuthContext] Retrying profile fetch...");
+          await new Promise((resolve) => setTimeout(resolve, 800));
+          return fetchProfile(userId, retries - 1);
+        }
+        return null;
+      }
+      
+      console.log("[AuthContext] Session verified, access token present:", !!currentSession.access_token);
+      
+      // Fetch profile with timeout
+      const fetchPromise = supabase
         .from("users")
         .select("*")
         .eq("id", userId)
         .single();
+        
+      const fetchTimeout = new Promise<null>((_, reject) =>
+        setTimeout(() => reject(new Error("Profile fetch timeout")), 5000)
+      );
+      
+      const result = await Promise.race([
+        fetchPromise,
+        fetchTimeout.then(() => ({ data: null, error: { message: "Timeout" } }))
+      ]);
+      
+      const { data, error } = result as { data: UserProfile | null; error: { message: string; code?: string } | null };
 
       if (error) {
         console.error("[AuthContext] Profile fetch error:", error);
+        
+        // If it's a timeout or network error, retry
+        if (error.message === "Timeout" && retries > 0) {
+          console.log(`[AuthContext] Fetch timed out, retrying... (${retries} attempts left)`);
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          return fetchProfile(userId, retries - 1);
+        }
+        
         // If profile not found and we have retries, wait and try again
         if (error.code === "PGRST116" && retries > 0) {
           console.log(
@@ -75,6 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await new Promise((resolve) => setTimeout(resolve, 1000));
           return fetchProfile(userId, retries - 1);
         }
+        
         console.error("[AuthContext] Profile fetch failed permanently:", error);
         return null;
       }
