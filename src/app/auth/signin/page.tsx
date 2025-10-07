@@ -21,10 +21,25 @@ export default function SignInPage() {
 
   // Redirect if already logged in
   useEffect(() => {
-    if (!authLoading && user) {
-      router.push("/dashboard");
-    }
-  }, [user, authLoading, router]);
+    const checkRedirect = async () => {
+      if (!authLoading && user) {
+        // Check if user is admin
+        const { data: profile } = await supabase
+          .from("users")
+          .select("role")
+          .eq("id", user.id)
+          .single();
+        
+        if (profile?.role === "ADMIN") {
+          router.push("/admin");
+        } else {
+          router.push("/dashboard");
+        }
+      }
+    };
+    
+    checkRedirect();
+  }, [user, authLoading, router, supabase]);
 
   // Show loading while checking auth state
   if (authLoading) {
@@ -103,6 +118,7 @@ export default function SignInPage() {
         body: JSON.stringify({ userId: authData.user.id }),
       });
 
+      let userRole = "USER";
       if (checkResponse.ok) {
         const checkData = await checkResponse.json();
         if (checkData.banned) {
@@ -111,11 +127,16 @@ export default function SignInPage() {
             "Your account has been banned. Please contact support."
           );
         }
+        userRole = checkData.role || "USER";
       }
 
       // Auth state change will fire automatically, updating the navbar
-      // Navigate to dashboard
-      router.push("/dashboard");
+      // Navigate to appropriate dashboard based on role
+      if (userRole === "ADMIN") {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error ? err.message : "An error occurred during sign in";

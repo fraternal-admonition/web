@@ -114,7 +114,7 @@ export default function Navbar({ onOpenModal }: NavbarProps) {
               {user ? (
                 <div className="flex items-center gap-3">
                   <Link
-                    href="/dashboard"
+                    href={profile?.role === "ADMIN" ? "/admin" : "/dashboard"}
                     className="text-[#222] hover:text-[#C19A43] text-sm font-sans uppercase tracking-wider transition-colors duration-300"
                   >
                     Dashboard
@@ -221,7 +221,7 @@ export default function Navbar({ onOpenModal }: NavbarProps) {
           {user ? (
             <div className="pt-4 space-y-3">
               <Link
-                href="/dashboard"
+                href={profile?.role === "ADMIN" ? "/admin" : "/dashboard"}
                 onClick={() => setMobileMenuOpen(false)}
                 className="block w-full text-center text-[#222] hover:text-[#C19A43] transition-colors duration-200 text-base font-sans uppercase tracking-wider py-3 border border-[#E5E5E0] rounded-lg"
               >
