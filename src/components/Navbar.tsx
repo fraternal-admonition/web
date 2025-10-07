@@ -16,6 +16,11 @@ export default function Navbar({ onOpenModal }: NavbarProps) {
   const { user, profile, loading, signOut } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
 
+  // Debug logging for deployed version
+  useEffect(() => {
+    console.log("Navbar render - loading:", loading, "user:", user?.email, "profile:", profile?.role);
+  }, [loading, user, profile]);
+
   const handleSignOut = async () => {
     setSigningOut(true);
     try {
@@ -98,18 +103,13 @@ export default function Navbar({ onOpenModal }: NavbarProps) {
             </div>
 
             {/* CTA Buttons / User Menu */}
-            <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-4">
               {loading ? (
-                <div className="hidden md:flex items-center gap-3">
+                <div className="flex items-center gap-3">
                   <div className="text-sm text-[#666]">Loading...</div>
                 </div>
               ) : user ? (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.6 }}
-                  className="hidden md:flex items-center gap-3"
-                >
+                <div className="flex items-center gap-3">
                   <Link
                     href="/dashboard"
                     className="text-[#222] hover:text-[#C19A43] text-sm font-sans uppercase tracking-wider transition-colors duration-300"
@@ -133,14 +133,9 @@ export default function Navbar({ onOpenModal }: NavbarProps) {
                   >
                     {signingOut ? "Signing out..." : "Sign Out"}
                   </button>
-                </motion.div>
+                </div>
               ) : (
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.6 }}
-                  className="hidden md:flex items-center gap-3"
-                >
+                <div className="flex items-center gap-3">
                   <Link
                     href="/auth/signin"
                     className="text-[#222] hover:text-[#C19A43] text-sm font-sans uppercase tracking-wider transition-colors duration-300"
@@ -154,7 +149,7 @@ export default function Navbar({ onOpenModal }: NavbarProps) {
                     <span className="relative z-10">Sign Up</span>
                     <div className="absolute inset-0 bg-gradient-to-r from-[#C19A43] to-[#004D40] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </Link>
-                </motion.div>
+                </div>
               )}
 
               {/* Mobile Menu Button */}
