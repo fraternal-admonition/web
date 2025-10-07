@@ -27,7 +27,7 @@ async function checkAuth() {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await checkAuth();
@@ -35,12 +35,13 @@ export async function GET(
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
+    const { id } = await params;
     const adminSupabase = await createAdminClient();
 
     const { data: page, error } = await adminSupabase
       .from("cms_pages")
       .select("*")
-      .eq("id", params.id)
+      .eq("id", id)
       .single();
 
     if (error) {
@@ -62,7 +63,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await checkAuth();
@@ -70,6 +71,7 @@ export async function PUT(
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
+    const { id } = await params;
     const body = await request.json();
     const { slug, title, content_rich_json, published } = body;
 
@@ -87,7 +89,7 @@ export async function PUT(
       .from("cms_pages")
       .select("id")
       .eq("slug", slug)
-      .neq("id", params.id)
+      .neq("id", id)
       .single();
 
     if (existingPage) {
@@ -106,7 +108,7 @@ export async function PUT(
         published: published || false,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", params.id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -126,7 +128,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await checkAuth();
@@ -134,12 +136,13 @@ export async function DELETE(
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
+    const { id } = await params;
     const adminSupabase = await createAdminClient();
 
     const { error } = await adminSupabase
       .from("cms_pages")
       .delete()
-      .eq("id", params.id);
+      .eq("id", id);
 
     if (error) {
       throw error;

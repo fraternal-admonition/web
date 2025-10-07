@@ -27,7 +27,7 @@ async function checkAuth() {
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await checkAuth();
@@ -35,6 +35,7 @@ export async function PUT(
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
+    const { id } = await params;
     const body = await request.json();
     const { key, value_json } = body;
 
@@ -49,7 +50,7 @@ export async function PUT(
       .from("cms_settings")
       .select("id")
       .eq("key", key)
-      .neq("id", params.id)
+      .neq("id", id)
       .single();
 
     if (existingSetting) {
@@ -66,7 +67,7 @@ export async function PUT(
         value_json: value_json || {},
         updated_at: new Date().toISOString(),
       })
-      .eq("id", params.id)
+      .eq("id", id)
       .select()
       .single();
 
@@ -86,7 +87,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await checkAuth();
@@ -94,12 +95,13 @@ export async function DELETE(
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
+    const { id } = await params;
     const adminSupabase = await createAdminClient();
 
     const { error } = await adminSupabase
       .from("cms_settings")
       .delete()
-      .eq("id", params.id);
+      .eq("id", id);
 
     if (error) {
       throw error;

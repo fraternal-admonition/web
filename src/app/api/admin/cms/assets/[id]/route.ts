@@ -27,7 +27,7 @@ async function checkAuth() {
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await checkAuth();
@@ -35,12 +35,13 @@ export async function DELETE(
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
+    const { id } = await params;
     const adminSupabase = await createAdminClient();
 
     const { error } = await adminSupabase
       .from("cms_assets")
       .delete()
-      .eq("id", params.id);
+      .eq("id", id);
 
     if (error) {
       throw error;
