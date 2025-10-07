@@ -18,7 +18,14 @@ export default function Navbar({ onOpenModal }: NavbarProps) {
 
   // Debug logging for deployed version
   useEffect(() => {
-    console.log("Navbar render - loading:", loading, "user:", user?.email, "profile:", profile?.role);
+    console.log(
+      "Navbar render - loading:",
+      loading,
+      "user:",
+      user?.email,
+      "profile:",
+      profile?.role
+    );
   }, [loading, user, profile]);
 
   const handleSignOut = async () => {

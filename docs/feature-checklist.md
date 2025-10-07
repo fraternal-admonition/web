@@ -25,10 +25,10 @@ _Last updated: 2025-10-04_
 
 ### 1.3 CMS (Pages & Settings)
 
-- [ ] Admin CRUD for `cms_pages`, upload `cms_assets`, edit `cms_settings` (e.g., site lock, banners).
+- [x] Admin CRUD for `cms_pages`, upload `cms_assets`, edit `cms_settings` (e.g., site lock, banners).
 - [x] Public render of Home, About, Rules, FAQ, Contact.
-- [ ] **Tables:** `cms_pages`, `cms_assets`, `cms_settings`.
-- [ ] **Accept:** Draft vs published; content versioning strategy (app-level) documented.
+- [x] **Tables:** `cms_pages`, `cms_assets`, `cms_settings`.
+- [x] **Accept:** Draft vs published; content versioning strategy (app-level) documented.
 
 ### 1.4 Updates / Blog
 
