@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter, Playfair_Display, Source_Serif_4, Merriweather_Sans } from "next/font/google";
+import {
+  Geist,
+  Geist_Mono,
+  Inter,
+  Playfair_Display,
+  Source_Serif_4,
+  Merriweather_Sans,
+} from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -40,7 +47,9 @@ const merriweather = Merriweather_Sans({
 
 export const metadata: Metadata = {
   title: "Fraternal Admonition - Letters to Goliath",
-  description: "Fraternal Admonition is the biblical principle of love expressed through admonition—an act of warning before public judgment.",
+  description:
+    "Fraternal Admonition is the biblical principle of love expressed through admonition—an act of warning before public judgment.",
+  themeColor: "#F9F9F7",
 };
 
 export default function RootLayout({
@@ -49,10 +58,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable} ${sourceSerif.variable} ${merriweather.variable} ${geistSans.variable} ${geistMono.variable}`}>
-      <body className="antialiased">
-        {children}
-      </body>
+    <html
+      lang="en"
+      className={`${inter.variable} ${playfair.variable} ${sourceSerif.variable} ${merriweather.variable} ${geistSans.variable} ${geistMono.variable}`}
+    >
+      <body className="antialiased">{children}</body>
     </html>
   );
 }

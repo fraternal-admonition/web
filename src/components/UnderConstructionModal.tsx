@@ -1,24 +1,27 @@
-'use client';
+"use client";
 
-import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect } from 'react';
+import { motion, AnimatePresence } from "framer-motion";
+import { useEffect } from "react";
 
 interface UnderConstructionModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function UnderConstructionModal({ isOpen, onClose }: UnderConstructionModalProps) {
+export default function UnderConstructionModal({
+  isOpen,
+  onClose,
+}: UnderConstructionModalProps) {
   // Close modal on Escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === "Escape" && isOpen) {
         onClose();
       }
     };
-    
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
   }, [isOpen, onClose]);
 
   return (
@@ -49,13 +52,25 @@ export default function UnderConstructionModal({ isOpen, onClose }: UnderConstru
               <div className="relative bg-gradient-to-br from-white via-[#F9F9F7] to-white rounded-3xl shadow-2xl overflow-hidden border-2 border-[#C19A43]/20">
                 {/* Decorative Background Elements */}
                 <div className="absolute inset-0 opacity-[0.03]">
-                  <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                  <svg
+                    className="w-full h-full"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
                     <defs>
-                      <pattern id="modal-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
+                      <pattern
+                        id="modal-pattern"
+                        width="40"
+                        height="40"
+                        patternUnits="userSpaceOnUse"
+                      >
                         <circle cx="20" cy="20" r="1" fill="#222" />
                       </pattern>
                     </defs>
-                    <rect width="100%" height="100%" fill="url(#modal-pattern)" />
+                    <rect
+                      width="100%"
+                      height="100%"
+                      fill="url(#modal-pattern)"
+                    />
                   </svg>
                 </div>
 
@@ -92,8 +107,18 @@ export default function UnderConstructionModal({ isOpen, onClose }: UnderConstru
                   >
                     <div className="relative">
                       <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#C19A43] to-[#D4AF37] flex items-center justify-center shadow-xl">
-                        <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                        <svg
+                          className="w-10 h-10 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
+                          />
                         </svg>
                       </div>
                       <div className="absolute inset-0 bg-[#C19A43] blur-2xl opacity-30 rounded-full" />
@@ -110,7 +135,7 @@ export default function UnderConstructionModal({ isOpen, onClose }: UnderConstru
                     <h2 className="text-4xl md:text-5xl font-serif text-[#222] font-bold tracking-[-0.02em]">
                       Under Construction
                     </h2>
-                    
+
                     {/* Decorative Line */}
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-12 h-[2px] bg-gradient-to-r from-transparent to-[#C19A43]" />
@@ -127,9 +152,8 @@ export default function UnderConstructionModal({ isOpen, onClose }: UnderConstru
                     className="text-center"
                   >
                     <p className="text-lg md:text-xl text-[#222] leading-[1.8] font-body-serif max-w-[500px] mx-auto">
-                      This section is under construction. Please check back after the
-                      <span className="font-semibold text-[#C19A43]"> Make Europe Great Again Conference </span>
-                      in Dubrovnik.
+                      This section is under construction. Please check back
+                      soon.
                     </p>
                   </motion.div>
 
@@ -146,8 +170,18 @@ export default function UnderConstructionModal({ isOpen, onClose }: UnderConstru
                     >
                       <span className="relative z-10 flex items-center gap-2">
                         <span>Got It</span>
-                        <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        <svg
+                          className="w-5 h-5 group-hover:translate-x-1 transition-transform"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
                         </svg>
                       </span>
                       <div className="absolute inset-0 bg-gradient-to-r from-[#C19A43] to-[#D4AF37] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

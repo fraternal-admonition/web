@@ -7,7 +7,7 @@
 }
 
 :root {
-  --background: #F9F9F7;
+  --background: #f9f9f7;
   --foreground: #222222;
 }
 
@@ -18,6 +18,15 @@ body {
   line-height: 1.6;
 }
 
-html { scroll-behavior: smooth; }
-.font-serif { font-family: var(--font-playfair), serif; }
-.font-body-serif { font-family: var(--font-source-serif), serif; }
+html {
+  scroll-behavior: smooth;
+}
+.font-serif {
+  font-family: var(--font-playfair), serif;
+}
+.font-body-serif {
+  font-family: var(--font-source-serif), serif;
+}
+html {
+  color-scheme: light;
+}
