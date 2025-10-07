@@ -43,6 +43,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log(
       `[AuthContext] Fetching profile for user: ${userId}, retries left: ${retries}`
     );
+    
+    // Ensure we have an active session before fetching
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    if (!currentSession) {
+      console.error("[AuthContext] No active session, cannot fetch profile");
+      if (retries > 0) {
+        console.log("[AuthContext] Waiting for session...");
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        return fetchProfile(userId, retries - 1);
+      }
+      return null;
+    }
+    
+    console.log("[AuthContext] Session verified, fetching profile...");
+    
     try {
       const { data, error } = await supabase
         .from("users")
