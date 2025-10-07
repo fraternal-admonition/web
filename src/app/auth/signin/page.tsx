@@ -57,10 +57,11 @@ export default function SignInPage() {
       });
 
       if (error) {
-        throw error;
-      }
-    } catch (err: any) {
-      setError(err.message || "Failed to sign in with Google");
+      throw error;
+    }
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Failed to sign in with Google";
+    setError(errorMessage);
       setGoogleLoading(false);
     }
   };
@@ -90,8 +91,9 @@ export default function SignInPage() {
       // Redirect to dashboard on success
       router.push("/dashboard");
       router.refresh();
-    } catch (err: any) {
-      setError(err.message || "An error occurred during sign in");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "An error occurred during sign in";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -115,8 +117,9 @@ export default function SignInPage() {
       }
 
       setResendSuccess(true);
-    } catch (err: any) {
-      setError(err.message || "Failed to resend verification email");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to resend verification email";
+      setError(errorMessage);
     } finally {
       setResendLoading(false);
     }
@@ -253,7 +256,7 @@ export default function SignInPage() {
         </form>
 
         <div className="mt-6 text-center text-sm text-[#666]">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link
             href="/auth/signup"
             className="text-[#004D40] font-semibold hover:text-[#C19A43] transition-colors"

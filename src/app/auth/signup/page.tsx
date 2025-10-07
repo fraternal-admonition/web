@@ -56,10 +56,11 @@ export default function SignUpPage() {
       });
 
       if (error) {
-        throw error;
-      }
-    } catch (err: any) {
-      setError(err.message || "Failed to sign up with Google");
+      throw error;
+    }
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Failed to sign up with Google";
+    setError(errorMessage);
       setGoogleLoading(false);
     }
   };
@@ -97,8 +98,9 @@ export default function SignUpPage() {
 
       setSuccess(true);
       // Don't redirect yet, show success message
-    } catch (err: any) {
-      setError(err.message || "An error occurred during sign up");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "An error occurred during sign up";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -128,14 +130,14 @@ export default function SignUpPage() {
               Check Your Email!
             </h2>
             <p className="text-[#666] leading-relaxed">
-              We've sent a verification link to <strong>{email}</strong>. Please
+              We&apos;ve sent a verification link to <strong>{email}</strong>. Please
               check your inbox and click the link to verify your account.
             </p>
           </div>
 
           <div className="bg-[#F9F9F7] rounded-lg p-4 mb-6">
             <p className="text-sm text-[#666]">
-              <strong>Didn't receive the email?</strong>
+              <strong>Didn&apos;t receive the email?</strong>
               <br />
               Check your spam folder or{" "}
               <button

@@ -6,7 +6,7 @@ export async function GET() {
     const adminClient = await createAdminClient();
 
     // Test 1: Check if we can connect
-    const { data: testData, error: testError } = await adminClient
+    const { error: testError } = await adminClient
       .from("users")
       .select("count")
       .limit(1);
@@ -39,7 +39,7 @@ export async function GET() {
 
     if (!authError && authData.user) {
       // Now try to insert the profile
-      const { data: insertData, error: profileInsertError } = await adminClient
+      const { error: profileInsertError } = await adminClient
         .from("users")
         .insert({
           id: authData.user.id,
@@ -77,12 +77,13 @@ export async function GET() {
           process.env.SUPABASE_SERVICE_ROLE_KEY?.substring(0, 20) + "...",
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
       {
         success: false,
         error: "Unexpected error",
-        message: error.message,
+        message: errorMessage,
         envCheck: {
           hasServiceRoleKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
           hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
