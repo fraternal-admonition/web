@@ -1,74 +1,95 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import Image from 'next/image';
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import Image from "next/image";
+import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface NavbarProps {
-  onOpenModal: () => void;
+  onOpenModal?: () => void;
 }
 
 export default function Navbar({ onOpenModal }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, profile, loading, signOut } = useAuth();
+  const [signingOut, setSigningOut] = useState(false);
+
+  const handleSignOut = async () => {
+    setSigningOut(true);
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Sign out error:", error);
+      // signOut in AuthContext handles errors gracefully, so we don't need to do anything
+    } finally {
+      // Reset after a short delay to ensure navigation happens
+      setTimeout(() => {
+        setSigningOut(false);
+      }, 100);
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const navItems = ["About", "Contest", "Contact", "Updates"];
 
   return (
     <>
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          scrolled 
-            ? 'bg-[#F9F9F7]/98 backdrop-blur-md shadow-[0_4px_24px_rgba(0,0,0,0.06)]' 
-            : 'bg-gradient-to-b from-[#F9F9F7] to-[#F9F9F7]/80 backdrop-blur-sm'
+          scrolled
+            ? "bg-[#F9F9F7]/98 backdrop-blur-md shadow-[0_4px_24px_rgba(0,0,0,0.06)]"
+            : "bg-gradient-to-b from-[#F9F9F7] to-[#F9F9F7]/80 backdrop-blur-sm"
         }`}
       >
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
           <div className="flex items-center justify-between h-20">
             {/* Logo Section */}
-            <motion.div 
-              className="flex items-center gap-3"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              {/* Logo Image */}
-              <div className="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-[#C19A43]/20 hover:ring-[#C19A43]/40 transition-all duration-300">
+            <Link href="/" className="flex items-center gap-3 group">
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                className="relative"
+              >
                 <Image
                   src="/logo.png"
-                  alt="FA Logo"
-                  fill
-                  className="object-cover"
-                  priority
+                  alt="Fraternal Admonition"
+                  width={48}
+                  height={48}
+                  className="transition-transform duration-300 group-hover:scale-110"
                 />
-              </div>
-              
-              {/* Text - Hidden on mobile, visible on desktop */}
-              <div className="hidden md:block">
-                <h1 className="text-xl font-serif tracking-tight leading-tight">
-                  <span className="text-[#222] font-semibold">Fraternal</span>
-                  <br />
-                  <span className="text-[#C19A43] text-sm tracking-wider">ADMONITION</span>
-                </h1>
-              </div>
-            </motion.div>
+              </motion.div>
+              <motion.h1
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="hidden md:block text-lg font-serif"
+              >
+                <span className="text-[#222]">Fraternal </span>
+                <span className="text-[#C19A43]">Admonition</span>
+              </motion.h1>
+            </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-10">
-              {['About', 'Contest', 'Contact'].map((item, idx) => (
+            <div className="hidden lg:flex items-center gap-8">
+              {navItems.map((item, index) => (
                 <motion.button
                   key={item}
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.1 * index }}
                   onClick={onOpenModal}
-                  className="relative text-[#222] hover:text-[#C19A43] transition-colors duration-300 text-sm font-sans uppercase tracking-[0.15em] group"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: idx * 0.1 }}
+                  className="relative text-[#222] hover:text-[#C19A43] text-sm font-sans uppercase tracking-[0.1em] transition-colors duration-300 group"
                 >
                   {item}
                   <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-gradient-to-r from-[#C19A43] to-[#004D40] group-hover:w-full transition-all duration-300" />
@@ -76,18 +97,65 @@ export default function Navbar({ onOpenModal }: NavbarProps) {
               ))}
             </div>
 
-            {/* CTA Button */}
+            {/* CTA Buttons / User Menu */}
             <div className="flex items-center gap-4">
-              <motion.button
-                onClick={onOpenModal}
-                className="hidden sm:block relative overflow-hidden bg-[#004D40] hover:bg-[#003830] text-white px-6 py-2.5 rounded-lg text-sm font-sans uppercase tracking-wider transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 group"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                <span className="relative z-10">Get Updates</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-[#C19A43] to-[#004D40] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </motion.button>
+              {loading ? (
+                <div className="hidden md:flex items-center gap-3">
+                  <div className="text-sm text-[#666]">Loading...</div>
+                </div>
+              ) : user ? (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.6 }}
+                  className="hidden md:flex items-center gap-3"
+                >
+                  <Link
+                    href="/dashboard"
+                    className="text-[#222] hover:text-[#C19A43] text-sm font-sans uppercase tracking-wider transition-colors duration-300"
+                  >
+                    Dashboard
+                  </Link>
+                  <div className="flex items-center gap-2 px-3 py-2 bg-[#F9F9F7] rounded-lg border border-[#E5E5E0]">
+                    <span className="text-xs text-[#666] max-w-[150px] truncate">
+                      {user.email}
+                    </span>
+                    {profile?.role === "ADMIN" && (
+                      <span className="text-xs font-bold text-[#C19A43] bg-[#C19A43]/10 px-2 py-0.5 rounded">
+                        ADMIN
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={handleSignOut}
+                    disabled={signingOut}
+                    className="text-sm text-[#004D40] hover:text-[#00695C] font-medium transition-colors px-3 py-2 border border-[#E5E5E0] rounded-lg hover:bg-[#F9F9F7] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {signingOut ? "Signing out..." : "Sign Out"}
+                  </button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.6 }}
+                  className="hidden md:flex items-center gap-3"
+                >
+                  <Link
+                    href="/auth/signin"
+                    className="text-[#222] hover:text-[#C19A43] text-sm font-sans uppercase tracking-wider transition-colors duration-300"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/auth/signup"
+                    className="relative overflow-hidden bg-[#004D40] hover:bg-[#003830] text-white px-6 py-2.5 rounded-lg text-sm font-sans uppercase tracking-wider transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 group"
+                  >
+                    <span className="relative z-10">Sign Up</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#C19A43] to-[#004D40] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  </Link>
+                </motion.div>
+              )}
 
               {/* Mobile Menu Button */}
               <button
@@ -95,11 +163,26 @@ export default function Navbar({ onOpenModal }: NavbarProps) {
                 className="lg:hidden p-2 text-[#222] hover:text-[#C19A43] transition-colors"
                 aria-label="Toggle menu"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   {mobileMenuOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
                   )}
                 </svg>
               </button>
@@ -111,19 +194,19 @@ export default function Navbar({ onOpenModal }: NavbarProps) {
       {/* Mobile Menu */}
       <motion.div
         initial={{ opacity: 0, height: 0 }}
-        animate={{ 
+        animate={{
           opacity: mobileMenuOpen ? 1 : 0,
-          height: mobileMenuOpen ? 'auto' : 0
+          height: mobileMenuOpen ? "auto" : 0,
         }}
         transition={{ duration: 0.3 }}
         className="fixed top-20 left-0 right-0 z-40 lg:hidden overflow-hidden bg-[#F9F9F7]/98 backdrop-blur-md border-b border-[#E5E5E0] shadow-xl"
       >
         <div className="px-6 py-8 space-y-6">
-          {['About', 'Contest', 'Contact', 'Updates'].map((item) => (
+          {["About", "Contest", "Contact", "Updates"].map((item) => (
             <button
               key={item}
               onClick={() => {
-                onOpenModal();
+                onOpenModal?.();
                 setMobileMenuOpen(false);
               }}
               className="block w-full text-left text-[#222] hover:text-[#C19A43] transition-colors duration-200 text-lg font-sans uppercase tracking-[0.1em] py-2 border-b border-[#E5E5E0]/50"
@@ -131,6 +214,56 @@ export default function Navbar({ onOpenModal }: NavbarProps) {
               {item}
             </button>
           ))}
+
+          {/* Auth Links / User Menu */}
+          {user ? (
+            <div className="pt-4 space-y-3">
+              <Link
+                href="/dashboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block w-full text-center text-[#222] hover:text-[#C19A43] transition-colors duration-200 text-base font-sans uppercase tracking-wider py-3 border border-[#E5E5E0] rounded-lg"
+              >
+                Dashboard
+              </Link>
+              <div className="p-3 bg-[#F9F9F7] rounded-lg border border-[#E5E5E0]">
+                <p className="text-xs text-[#666] mb-2 text-center">
+                  {user.email}
+                </p>
+                {profile?.role === "ADMIN" && (
+                  <p className="text-xs font-bold text-[#C19A43] text-center mb-2">
+                    ADMIN
+                  </p>
+                )}
+                <button
+                  onClick={async () => {
+                    await handleSignOut();
+                    setMobileMenuOpen(false);
+                  }}
+                  disabled={signingOut}
+                  className="w-full text-center text-[#004D40] hover:text-[#00695C] text-base font-sans uppercase tracking-wider py-2 border border-[#E5E5E0] rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {signingOut ? "Signing out..." : "Sign Out"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="pt-4 space-y-3">
+              <Link
+                href="/auth/signin"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block w-full text-center text-[#222] hover:text-[#C19A43] transition-colors duration-200 text-base font-sans uppercase tracking-wider py-3 border border-[#E5E5E0] rounded-lg"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/auth/signup"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block w-full text-center bg-[#004D40] hover:bg-[#003830] text-white py-3 rounded-lg text-base font-sans uppercase tracking-wider transition-all duration-300"
+              >
+                Sign Up
+              </Link>
+            </div>
+          )}
         </div>
       </motion.div>
     </>

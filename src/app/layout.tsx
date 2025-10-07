@@ -8,6 +8,8 @@ import {
   Merriweather_Sans,
 } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/contexts/AuthContext";
+import LayoutWrapper from "@/components/LayoutWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -49,6 +51,9 @@ export const metadata: Metadata = {
   title: "Fraternal Admonition - Letters to Goliath",
   description:
     "Fraternal Admonition is the biblical principle of love expressed through admonition—an act of warning before public judgment.",
+};
+
+export const viewport = {
   themeColor: "#F9F9F7",
 };
 
@@ -62,7 +67,11 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${playfair.variable} ${sourceSerif.variable} ${merriweather.variable} ${geistSans.variable} ${geistMono.variable}`}
     >
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <AuthProvider>
+          <LayoutWrapper>{children}</LayoutWrapper>
+        </AuthProvider>
+      </body>
     </html>
   );
 }
