@@ -40,6 +40,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     userId: string,
     retries = 3
   ): Promise<UserProfile | null> => {
+    console.log(
+      `[AuthContext] Fetching profile for user: ${userId}, retries left: ${retries}`
+    );
     try {
       const { data, error } = await supabase
         .from("users")
@@ -48,23 +51,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (error) {
+        console.error("[AuthContext] Profile fetch error:", error);
         // If profile not found and we have retries, wait and try again
         if (error.code === "PGRST116" && retries > 0) {
           console.log(
-            `Profile not found, retrying... (${retries} attempts left)`
+            `[AuthContext] Profile not found, retrying... (${retries} attempts left)`
           );
           await new Promise((resolve) => setTimeout(resolve, 1000));
           return fetchProfile(userId, retries - 1);
         }
-        console.error("Error fetching profile:", error);
+        console.error("[AuthContext] Profile fetch failed permanently:", error);
         return null;
       }
 
-      console.log("Profile fetched successfully:", data);
+      console.log("[AuthContext] Profile fetched successfully:", data);
       return data as UserProfile;
     } catch (error) {
-      console.error("Error in fetchProfile:", error);
+      console.error("[AuthContext] Unexpected error in fetchProfile:", error);
       if (retries > 0) {
+        console.log(
+          `[AuthContext] Retrying due to exception... (${retries} attempts left)`
+        );
         await new Promise((resolve) => setTimeout(resolve, 1000));
         return fetchProfile(userId, retries - 1);
       }
@@ -96,24 +103,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, "User:", session?.user?.email);
+      console.log(
+        "[AuthContext] Auth state changed:",
+        event,
+        "User:",
+        session?.user?.email
+      );
 
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
+        console.log("[AuthContext] User found, fetching profile...");
         // Don't set loading false until profile is fetched
         const profileData = await fetchProfile(session.user.id);
+        console.log("[AuthContext] Profile data received:", profileData);
         setProfile(profileData);
 
         // Check if user is banned
         if (profileData?.is_banned) {
+          console.log("[AuthContext] User is banned, signing out...");
           await supabase.auth.signOut();
           router.push("/auth/banned");
+          return; // Don't set loading false if redirecting
         }
 
+        console.log("[AuthContext] Setting loading to false");
         setLoading(false);
       } else {
+        console.log("[AuthContext] No user, clearing profile and setting loading to false");
         setProfile(null);
         setLoading(false);
       }
