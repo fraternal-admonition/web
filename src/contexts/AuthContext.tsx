@@ -36,7 +36,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const supabase = createClient();
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (
+    userId: string,
+    retries = 3
+  ): Promise<UserProfile | null> => {
     try {
       const { data, error } = await supabase
         .from("users")
@@ -45,13 +48,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (error) {
+        // If profile not found and we have retries, wait and try again
+        if (error.code === "PGRST116" && retries > 0) {
+          console.log(
+            `Profile not found, retrying... (${retries} attempts left)`
+          );
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          return fetchProfile(userId, retries - 1);
+        }
         console.error("Error fetching profile:", error);
         return null;
       }
 
+      console.log("Profile fetched successfully:", data);
       return data as UserProfile;
     } catch (error) {
       console.error("Error in fetchProfile:", error);
+      if (retries > 0) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        return fetchProfile(userId, retries - 1);
+      }
       return null;
     }
   };
@@ -79,11 +95,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event, "User:", session?.user?.email);
+
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
+        // Don't set loading false until profile is fetched
         const profileData = await fetchProfile(session.user.id);
         setProfile(profileData);
 
@@ -92,11 +111,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await supabase.auth.signOut();
           router.push("/auth/banned");
         }
+
+        setLoading(false);
       } else {
         setProfile(null);
+        setLoading(false);
       }
-
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();

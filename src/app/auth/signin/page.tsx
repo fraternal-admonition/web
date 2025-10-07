@@ -57,11 +57,12 @@ export default function SignInPage() {
       });
 
       if (error) {
-      throw error;
-    }
-  } catch (err: unknown) {
-    const errorMessage = err instanceof Error ? err.message : "Failed to sign in with Google";
-    setError(errorMessage);
+        throw error;
+      }
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to sign in with Google";
+      setError(errorMessage);
       setGoogleLoading(false);
     }
   };
@@ -73,26 +74,51 @@ export default function SignInPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/auth/signin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      // Sign in directly with Supabase client (not API route)
+      // This ensures the auth state change event fires immediately
+      const { data: authData, error: authError } =
+        await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (data.needsVerification) {
-          setNeedsVerification(true);
-        }
-        throw new Error(data.error || "Failed to sign in");
+      if (authError) {
+        throw authError;
       }
 
-      // Redirect to dashboard on success
+      if (!authData.user) {
+        throw new Error("Invalid credentials");
+      }
+
+      // Check if email is verified
+      if (!authData.user.email_confirmed_at) {
+        setNeedsVerification(true);
+        throw new Error("Please verify your email before signing in.");
+      }
+
+      // Check if user is banned via API (this doesn't affect session)
+      const checkResponse = await fetch("/api/auth/check-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: authData.user.id }),
+      });
+
+      if (checkResponse.ok) {
+        const checkData = await checkResponse.json();
+        if (checkData.banned) {
+          await supabase.auth.signOut();
+          throw new Error(
+            "Your account has been banned. Please contact support."
+          );
+        }
+      }
+
+      // Auth state change will fire automatically, updating the navbar
+      // Navigate to dashboard
       router.push("/dashboard");
-      router.refresh();
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : "An error occurred during sign in";
+      const errorMessage =
+        err instanceof Error ? err.message : "An error occurred during sign in";
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -118,7 +144,10 @@ export default function SignInPage() {
 
       setResendSuccess(true);
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to resend verification email";
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "Failed to resend verification email";
       setError(errorMessage);
     } finally {
       setResendLoading(false);
