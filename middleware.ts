@@ -10,13 +10,19 @@ export async function middleware(request: NextRequest) {
   const isLocalDev =
     hostname.includes("localhost") || hostname.includes("127.0.0.1");
   const isAdminPath = url.pathname.startsWith("/admin");
+  const isAuthPath = url.pathname.startsWith("/auth");
+  const isApiPath = url.pathname.startsWith("/api");
 
   // Production: Enforce subdomain routing
   if (!isLocalDev) {
-    // If on admin subdomain, rewrite to /admin path
-    if (isAdminSubdomain && !isAdminPath) {
-      url.pathname = `/admin${url.pathname}`;
-      return NextResponse.rewrite(url);
+    // If on admin subdomain
+    if (isAdminSubdomain) {
+      // Allow auth and api routes to pass through normally
+      if (!isAuthPath && !isApiPath && !isAdminPath) {
+        // Rewrite root and other paths to /admin
+        url.pathname = `/admin${url.pathname}`;
+        return NextResponse.rewrite(url);
+      }
     }
 
     // If trying to access /admin on main domain, redirect to home
