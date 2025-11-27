@@ -20,6 +20,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.74.0
         version: 2.75.0
+      '@tiptap/core':
+        specifier: ^3.7.2
+        version: 3.7.2(@tiptap/pm@3.7.2)
       '@tiptap/extension-character-count':
         specifier: ^3.6.5
         version: 3.7.2(@tiptap/extensions@3.7.2(@tiptap/core@3.7.2(@tiptap/pm@3.7.2))(@tiptap/pm@3.7.2))
