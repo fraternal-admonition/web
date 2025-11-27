@@ -32,7 +32,7 @@ export default function CalloutControl({ editor }: CalloutControlProps) {
   }, []);
 
   const insertCallout = (type: string) => {
-    editor.chain().focus().setCallout(type).run();
+    (editor.chain().focus() as any).setCallout(type).run();
     setIsOpen(false);
   };
 

@@ -244,7 +244,7 @@ export default function RichTextEditor({
     }
 
     if (embedUrl) {
-      editor.chain().focus().setIframe({ src: embedUrl, width }).run();
+      (editor.chain().focus() as any).setIframe({ src: embedUrl, width }).run();
     }
   };
 
@@ -256,12 +256,12 @@ export default function RichTextEditor({
     newTab: boolean;
   }) => {
     if (!editor) return;
-    editor.chain().focus().setButton(attrs).run();
+    (editor.chain().focus() as any).setButton(attrs).run();
   };
 
   const handleColumnInsert = (columnCount: number) => {
     if (!editor) return;
-    editor.chain().focus().setColumns(columnCount).run();
+    (editor.chain().focus() as any).setColumns(columnCount).run();
   };
 
   const handleEmojiInsert = (emoji: string) => {
