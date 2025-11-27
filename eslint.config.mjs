@@ -25,6 +25,7 @@ const eslintConfig = [
       "@typescript-eslint/no-explicit-any": "off",
       "react/no-unescaped-entities": "off",
       "prefer-const": "off",
+      "@next/next/no-html-link-for-pages": "off",
     },
   },
 ];
