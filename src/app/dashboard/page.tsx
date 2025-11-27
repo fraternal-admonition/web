@@ -30,7 +30,7 @@ export default async function DashboardPage() {
   }
 
   // Fetch user's submissions with status
-  const { data: submissions } = await supabase
+  const { data: rawSubmissions } = await supabase
     .from("submissions")
     .select(`
       id,
@@ -47,6 +47,12 @@ export default async function DashboardPage() {
     `)
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
+
+  // Transform contest from array to single object
+  const submissions = rawSubmissions?.map(sub => ({
+    ...sub,
+    contest: Array.isArray(sub.contest) ? sub.contest[0] : sub.contest
+  }));
 
   // Separate pending payment from all other submissions
   const pendingSubmissions = submissions?.filter(s => s.status === "PENDING_PAYMENT") || [];
