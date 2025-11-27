@@ -1,7 +1,7 @@
 /**
  * Cron job to send deadline warning and reminder emails
  * 
- * Schedule: Every 6 hours (0 */6 * * *)
+ * Schedule: Once daily at 2:00 PM (0 14 * * *)
  * 
  * Actions:
  * 1. Send 24-hour warning emails
