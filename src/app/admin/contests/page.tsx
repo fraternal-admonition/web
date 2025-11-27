@@ -148,7 +148,7 @@ export default async function ContestsPage() {
                         />
                       </td>
                       <td className="px-6 py-4">
-                        {contest.submission_count > 0 ? (
+                        {(contest.submission_count ?? 0) > 0 ? (
                           <Link
                             href={`/admin/submissions?contest_id=${contest.id}`}
                             className="text-sm text-[#004D40] hover:text-[#C19A43] font-medium transition-colors"
