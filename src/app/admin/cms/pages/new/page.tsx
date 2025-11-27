@@ -1,8 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+import toast from "react-hot-toast";
+
+const RichTextEditor = dynamic(() => import("@/components/editor"), {
+  ssr: false,
+  loading: () => (
+    <div className="border border-[#E5E5E0] rounded-lg bg-white p-4 min-h-[400px] flex items-center justify-center">
+      <span className="text-[#666]">Loading editor...</span>
+    </div>
+  ),
+});
 
 export default function NewCMSPage() {
   const router = useRouter();
@@ -14,7 +25,65 @@ export default function NewCMSPage() {
     title: "",
     content: "",
     published: false,
+    meta_title: "",
+    meta_description: "",
+    og_image: "",
+    excerpt: "",
   });
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [autoSaving, setAutoSaving] = useState(false);
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Auto-save functionality
+  useEffect(() => {
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    if (formData.content && formData.title) {
+      autoSaveTimeoutRef.current = setTimeout(() => {
+        saveDraft();
+      }, 30000); // Auto-save every 30 seconds
+    }
+
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [formData.content, formData.title]);
+
+  const saveDraft = async () => {
+    if (!formData.title || !formData.content) return;
+    
+    setAutoSaving(true);
+    try {
+      // For new pages, we'll save as draft in localStorage until first save
+      localStorage.setItem('cms_draft_new', JSON.stringify({
+        ...formData,
+        lastSaved: new Date().toISOString()
+      }));
+      setLastSaved(new Date());
+      toast.success('Draft saved automatically', { duration: 2000 });
+    } catch (error) {
+      console.error('Auto-save failed:', error);
+    }
+    setAutoSaving(false);
+  };
+
+  // Load draft on component mount
+  useEffect(() => {
+    const savedDraft = localStorage.getItem('cms_draft_new');
+    if (savedDraft) {
+      try {
+        const draft = JSON.parse(savedDraft);
+        setFormData(draft);
+        setLastSaved(new Date(draft.lastSaved));
+      } catch (error) {
+        console.error('Failed to load draft:', error);
+      }
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +101,10 @@ export default function NewCMSPage() {
           title: formData.title,
           content_rich_json: { content: formData.content },
           published: formData.published,
+          meta_title: formData.meta_title || null,
+          meta_description: formData.meta_description || null,
+          og_image: formData.og_image || null,
+          excerpt: formData.excerpt || null,
         }),
       });
 
@@ -41,6 +114,8 @@ export default function NewCMSPage() {
         throw new Error(result.error || "Failed to create page");
       }
 
+      // Clear draft after successful save
+      localStorage.removeItem('cms_draft_new');
       router.push("/admin/cms/pages");
       router.refresh();
     } catch (err) {
@@ -50,142 +125,244 @@ export default function NewCMSPage() {
   };
 
   return (
-    <div>
-      <div className="mb-8">
-        <div className="flex items-center space-x-4 mb-4">
-          <Link
-            href="/admin/cms/pages"
-            className="text-gray-600 hover:text-gray-900"
-          >
-            ← Back to Pages
-          </Link>
-        </div>
-        <h1 className="text-3xl font-bold text-gray-900">Create New Page</h1>
-        <p className="mt-2 text-gray-600">Add a new static page to your site</p>
-      </div>
-
-      {error && (
-        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          {/* Title */}
-          <div className="mb-6">
-            <label
-              htmlFor="title"
-              className="block text-sm font-medium text-gray-700 mb-2"
+    <div className="min-h-screen bg-[#F9F9F7]">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <div className="flex items-center space-x-4 mb-4">
+            <Link
+              href="/admin/cms/pages"
+              className="text-[#666] hover:text-[#004D40] transition-colors flex items-center gap-2"
             >
-              Page Title *
-            </label>
-            <input
-              type="text"
-              id="title"
-              required
-              value={formData.title}
-              onChange={(e) =>
-                setFormData({ ...formData, title: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="About Us"
-            />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                />
+              </svg>
+              Back to Pages
+            </Link>
           </div>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-serif text-[#222] mb-2">
+                Create New <span className="text-[#C19A43]">Page</span>
+              </h1>
+              <p className="text-[#666]">Add a new static page to your site</p>
+            </div>
+            {(lastSaved || autoSaving) && (
+              <div className="text-sm text-[#666] flex items-center gap-2">
+                {autoSaving ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Saving draft...
+                  </>
+                ) : lastSaved ? (
+                  <>
+                    <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    Draft saved {lastSaved.toLocaleTimeString()}
+                  </>
+                ) : null}
+              </div>
+            )}
+          </div>
+        </div>
 
-          {/* Slug */}
-          <div className="mb-6">
-            <label
-              htmlFor="slug"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              URL Slug *
-            </label>
-            <div className="flex items-center">
-              <span className="text-gray-500 mr-2">/</span>
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="bg-white rounded-lg shadow-sm border border-[#E5E5E0] p-6">
+            {/* Title */}
+            <div className="mb-6">
+              <label
+                htmlFor="title"
+                className="block text-sm font-medium text-[#222] mb-2"
+              >
+                Page Title *
+              </label>
               <input
                 type="text"
-                id="slug"
+                id="title"
                 required
-                pattern="[a-z0-9-]+"
-                value={formData.slug}
+                value={formData.title}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    slug: e.target.value.toLowerCase(),
-                  })
+                  setFormData({ ...formData, title: e.target.value })
                 }
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="about-us"
+                className="w-full px-4 py-3 border border-[#E5E5E0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004D40] focus:border-transparent"
+                placeholder="About Us"
               />
             </div>
-            <p className="mt-1 text-sm text-gray-500">
-              Use lowercase letters, numbers, and hyphens only
-            </p>
-          </div>
 
-          {/* Content */}
-          <div className="mb-6">
-            <label
-              htmlFor="content"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Content *
-            </label>
-            <textarea
-              id="content"
-              required
-              rows={15}
-              value={formData.content}
-              onChange={(e) =>
-                setFormData({ ...formData, content: e.target.value })
-              }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
-              placeholder="Page content (plain text or HTML)..."
-            />
-            <p className="mt-1 text-sm text-gray-500">
-              You can use HTML tags for formatting
-            </p>
-          </div>
+            {/* Slug */}
+            <div className="mb-6">
+              <label
+                htmlFor="slug"
+                className="block text-sm font-medium text-[#222] mb-2"
+              >
+                URL Slug *
+              </label>
+              <div className="flex items-center">
+                <span className="text-[#666] mr-2">/</span>
+                <input
+                  type="text"
+                  id="slug"
+                  required
+                  pattern="[a-z0-9-]+"
+                  value={formData.slug}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      slug: e.target.value.toLowerCase(),
+                    })
+                  }
+                  className="flex-1 px-4 py-3 border border-[#E5E5E0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004D40] focus:border-transparent"
+                  placeholder="about-us"
+                />
+              </div>
+              <p className="mt-1 text-sm text-[#666]">
+                Use lowercase letters, numbers, and hyphens only
+              </p>
+            </div>
 
-          {/* Published */}
-          <div className="mb-6">
-            <label className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                checked={formData.published}
-                onChange={(e) =>
-                  setFormData({ ...formData, published: e.target.checked })
+            {/* Content */}
+            <div className="mb-6">
+              <label
+                htmlFor="content"
+                className="block text-sm font-medium text-[#222] mb-2"
+              >
+                Content *
+              </label>
+              <RichTextEditor
+                content={formData.content}
+                onChange={(html) =>
+                  setFormData({ ...formData, content: html })
                 }
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                placeholder="Start writing your page content..."
               />
-              <span className="text-sm font-medium text-gray-700">
-                Publish immediately
-              </span>
-            </label>
-            <p className="ml-7 text-sm text-gray-500">
-              Unpublished pages are saved as drafts
-            </p>
-          </div>
-        </div>
+              <p className="mt-2 text-sm text-[#666]">
+                Use the toolbar above to format your content with headings, lists, links, images, tables, and more.
+              </p>
+            </div>
 
-        {/* Actions */}
-        <div className="flex justify-end space-x-4">
-          <Link
-            href="/admin/cms/pages"
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            Cancel
-          </Link>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "Creating..." : "Create Page"}
-          </button>
-        </div>
-      </form>
+            {/* SEO Settings */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-4 text-[#222]">SEO Settings</h3>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-[#222] mb-2">
+                  Meta Title (for search engines)
+                </label>
+                <input
+                  type="text"
+                  value={formData.meta_title}
+                  onChange={(e) => setFormData({ ...formData, meta_title: e.target.value })}
+                  className="w-full px-4 py-2 border border-[#E5E5E0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004D40]"
+                  placeholder="Page title for SEO (60 characters max)"
+                  maxLength={60}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {formData.meta_title.length}/60 characters
+                </p>
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-[#222] mb-2">
+                  Meta Description (for search engines)
+                </label>
+                <textarea
+                  value={formData.meta_description}
+                  onChange={(e) => setFormData({ ...formData, meta_description: e.target.value })}
+                  className="w-full px-4 py-2 border border-[#E5E5E0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004D40]"
+                  placeholder="Brief description for search results (160 characters max)"
+                  maxLength={160}
+                  rows={3}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {formData.meta_description.length}/160 characters
+                </p>
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-[#222] mb-2">
+                  OG Image URL (for social media)
+                </label>
+                <input
+                  type="url"
+                  value={formData.og_image}
+                  onChange={(e) => setFormData({ ...formData, og_image: e.target.value })}
+                  className="w-full px-4 py-2 border border-[#E5E5E0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004D40]"
+                  placeholder="https://example.com/image.jpg"
+                />
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-[#222] mb-2">
+                  Excerpt (page summary)
+                </label>
+                <textarea
+                  value={formData.excerpt}
+                  onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
+                  className="w-full px-4 py-2 border border-[#E5E5E0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#004D40]"
+                  placeholder="Brief summary of the page content"
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            {/* Published */}
+            <div className="mb-6">
+              <label className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  checked={formData.published}
+                  onChange={(e) =>
+                    setFormData({ ...formData, published: e.target.checked })
+                  }
+                  className="w-4 h-4 text-[#004D40] border-[#E5E5E0] rounded focus:ring-[#004D40]"
+                />
+                <span className="text-sm font-medium text-[#222]">
+                  Publish immediately
+                </span>
+              </label>
+              <p className="ml-7 text-sm text-[#666]">
+                Unpublished pages are saved as drafts
+              </p>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end space-x-4">
+            <Link
+              href="/admin/cms/pages"
+              className="px-6 py-3 border border-[#E5E5E0] rounded-lg text-[#222] hover:bg-[#F9F9F7] transition-colors font-medium"
+            >
+              Cancel
+            </Link>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-6 py-3 bg-[#004D40] text-white rounded-lg hover:bg-[#00695C] transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            >
+              {loading ? "Creating..." : "Create Page"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

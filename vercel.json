@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/peer-verification/check-deadlines",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/peer-verification/send-warnings",
+      "schedule": "0 */6 * * *"
+    }
+  ]
+}

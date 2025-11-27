@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
@@ -82,10 +83,18 @@ export async function POST(request: NextRequest) {
 
     console.log("Profile created successfully:", profileData);
 
+    // Send welcome email (non-blocking)
+    if (data.user.email) {
+      console.log("Sending welcome email to new user:", data.user.email);
+      sendWelcomeEmail(data.user.email).catch((err) => {
+        console.error("Failed to send welcome email:", err);
+        // Don't block the response if email fails
+      });
+    }
+
     return NextResponse.json(
       {
-        message:
-          "Signup successful! Please check your email to verify your account.",
+        message: "Signup successful! Welcome to Fraternal Admonition.",
         user: {
           id: data.user.id,
           email: data.user.email,

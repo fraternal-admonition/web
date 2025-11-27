@@ -24,7 +24,7 @@ _Last updated: 2025-10-04_
 - [x] **Accept:** Verified users can access dashboard; ban flag respected in app middleware.
 
 ### 1.3 CMS (Pages & Settings)
-
+  
 - [x] Admin CRUD for `cms_pages`, upload `cms_assets`, edit `cms_settings` (e.g., site lock, banners).
 - [x] Public render of Home, About, Rules, FAQ, Contact.
 - [x] **Tables:** `cms_pages`, `cms_assets`, `cms_settings`.
@@ -32,9 +32,9 @@ _Last updated: 2025-10-04_
 
 ### 1.4 Updates / Blog
 
-- [ ] Admin CRUD for `posts`; public listing & detail.
-- [ ] **Tables:** `posts`
-- [ ] **Accept:** Publish scheduling (optional), SEO fields in metadata.
+- [x] Admin CRUD for `posts`; public listing & detail.
+- [x] **Tables:** `posts`
+- [x] **Accept:** Publish scheduling (optional), SEO fields in metadata.
 
 ---
 
@@ -42,15 +42,15 @@ _Last updated: 2025-10-04_
 
 ### 2.1 Contest CRUD & Timeline
 
-- [ ] Admin creates LtG contest; set windows (submission, AI filter, peer, public), optional `max_entries`.
-- [ ] **Tables:** `contests`
-- [ ] **Accept:** Phase auto-switch (cron) or manual override; UI displays current phase.
+- [x] Admin creates LtG contest; set windows (submission, AI filter, peer, public), optional `max_entries`.
+- [x] **Tables:** `contests`
+- [x] **Accept:** Phase auto-switch (cron) or manual override; UI displays current phase.
 
 ### 2.2 Illustrations (50 options)
 
-- [ ] Admin uploads/links images; mark active/inactive.
-- [ ] **Tables:** `illustrations`, `cms_assets`
-- [ ] **Accept:** Unique titles; render gallery in Submit form.
+- [x] Admin uploads/links images; mark active/inactive.
+- [x] **Tables:** `illustrations`, `cms_assets`
+- [x] **Accept:** Unique titles; render gallery in Submit form.
 
 ---
 

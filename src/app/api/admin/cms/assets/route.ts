@@ -1,26 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/server";
+import { checkAdminAuth } from "@/lib/admin-auth";
+import { CMSAssetSchema } from "@/lib/security/validators";
+import { logAuditEvent, getIPAddress, getUserAgent } from "@/lib/security/audit-log";
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: userData } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (!userData || userData.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const auth = await checkAdminAuth();
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
     const adminSupabase = await createAdminClient();
@@ -46,31 +34,23 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: userData } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (!userData || userData.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const auth = await checkAdminAuth();
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
     const body = await request.json();
-    const { path, alt, kind, meta } = body;
 
-    if (!path) {
-      return NextResponse.json({ error: "Path is required" }, { status: 400 });
+    // Validate input
+    const validation = CMSAssetSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Validation failed", details: validation.error.errors },
+        { status: 400 }
+      );
     }
+
+    const { path, alt, kind, meta } = validation.data;
 
     const adminSupabase = await createAdminClient();
 
@@ -88,6 +68,17 @@ export async function POST(request: NextRequest) {
     if (error) {
       throw error;
     }
+
+    // Log audit event
+    await logAuditEvent({
+      user_id: auth.user!.id,
+      action: "CREATE",
+      resource_type: "cms_asset",
+      resource_id: newAsset.id,
+      changes: { path, alt, kind },
+      ip_address: getIPAddress(request.headers),
+      user_agent: getUserAgent(request.headers),
+    });
 
     return NextResponse.json({ data: newAsset }, { status: 201 });
   } catch (error) {

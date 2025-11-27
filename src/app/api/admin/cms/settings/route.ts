@@ -1,38 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/server";
+import { checkAdminAuth } from "@/lib/admin-auth";
+import { CMSSettingSchema } from "@/lib/security/validators";
+import { logAuditEvent, getIPAddress, getUserAgent } from "@/lib/security/audit-log";
+import { getAllSettings } from "@/lib/cms/settings-service";
+import { settingsCache } from "@/lib/cms/settings-cache";
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await checkAdminAuth();
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
-    const { data: userData } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (!userData || userData.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    const adminSupabase = await createAdminClient();
-
-    const { data: settings, error } = await adminSupabase
-      .from("cms_settings")
-      .select("*")
-      .order("key", { ascending: true });
-
-    if (error) {
-      throw error;
-    }
+    // Return settings merged with schema
+    const settings = await getAllSettings();
 
     return NextResponse.json({ data: settings });
   } catch (error) {
@@ -46,31 +28,23 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: userData } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (!userData || userData.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const auth = await checkAdminAuth();
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
     const body = await request.json();
-    const { key, value_json } = body;
 
-    if (!key) {
-      return NextResponse.json({ error: "Key is required" }, { status: 400 });
+    // Validate input
+    const validation = CMSSettingSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: "Validation failed", details: validation.error.errors },
+        { status: 400 }
+      );
     }
+
+    const { key, value_json } = validation.data;
 
     const adminSupabase = await createAdminClient();
 
@@ -100,6 +74,21 @@ export async function POST(request: NextRequest) {
     if (error) {
       throw error;
     }
+
+    // Log audit event
+    await logAuditEvent({
+      user_id: auth.user!.id,
+      action: "CREATE",
+      resource_type: "cms_setting",
+      resource_id: newSetting.id,
+      changes: { key, value_json },
+      ip_address: getIPAddress(request.headers),
+      user_agent: getUserAgent(request.headers),
+    });
+
+    // Invalidate settings cache so new setting is immediately available
+    settingsCache.invalidate();
+    console.log('[Settings API] Cache invalidated after creating:', key);
 
     return NextResponse.json({ data: newSetting }, { status: 201 });
   } catch (error) {

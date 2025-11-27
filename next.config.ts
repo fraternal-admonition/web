@@ -1,7 +1,23 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Fix for Next.js detecting wrong workspace root
+  outputFileTracingRoot: path.join(__dirname),
+  
+  // Configure allowed image domains for Next.js Image component
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'mlbhsippcnzeybheudhu.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/**',
+      },
+    ],
+    // Increase device sizes for better image optimization
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+  },
 };
 
 export default nextConfig;

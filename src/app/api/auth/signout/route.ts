@@ -9,18 +9,13 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Sign out error:", error);
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return NextResponse.redirect(new URL("/?error=signout_failed", request.url));
     }
 
-    return NextResponse.json(
-      { message: "Sign out successful" },
-      { status: 200 }
-    );
+    // Redirect to home page after successful sign out
+    return NextResponse.redirect(new URL("/", request.url));
   } catch (error) {
     console.error("Unexpected error during sign out:", error);
-    return NextResponse.json(
-      { error: "An unexpected error occurred" },
-      { status: 500 }
-    );
+    return NextResponse.redirect(new URL("/?error=signout_error", request.url));
   }
 }

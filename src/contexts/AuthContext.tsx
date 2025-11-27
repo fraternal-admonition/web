@@ -1,144 +1,327 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-
-type UserRole = "USER" | "TESTER" | "ADMIN";
-
-interface UserProfile {
-  id: string;
-  role: UserRole;
-  display_id: string | null;
-  country: string | null;
-  is_banned: boolean;
-  created_at: string;
-  updated_at: string;
-}
+import SessionExpiryWarning from "@/components/SessionExpiryWarning";
+import {
+  profileCache,
+  activityTracker,
+  AuthStateMachine,
+  AuthState,
+  SessionManager,
+  logger,
+  toAuthError,
+  getUserFriendlyMessage,
+  type UserProfile,
+  type AuthError,
+} from "@/lib/auth";
 
 interface AuthContextType {
+  // State
   user: User | null;
   profile: UserProfile | null;
   session: Session | null;
   loading: boolean;
+  error: AuthError | null;
+
+  // Session info
+  sessionExpiry: Date | null;
+  lastActivity: Date | null;
+
+  // Actions
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  refreshSession: () => Promise<void>;
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  // Core state
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<AuthError | null>(null);
+
+  // Session info
+  const [sessionExpiry, setSessionExpiry] = useState<Date | null>(null);
+  const [lastActivity, setLastActivity] = useState<Date | null>(null);
+
+  // Session expiry warning
+  const [showExpiryWarning, setShowExpiryWarning] = useState(false);
+  const [expiryTimeRemaining, setExpiryTimeRemaining] = useState(300); // 5 minutes
+
+  // Debug: Log when modal state changes
+  useEffect(() => {
+    console.log("📊 Modal state changed:", {
+      showExpiryWarning,
+      expiryTimeRemaining,
+      hasSessionManager: !!sessionManagerRef.current,
+    });
+  }, [showExpiryWarning, expiryTimeRemaining]);
+
+  // Refs for managers (don't trigger re-renders)
+  const stateMachineRef = useRef<AuthStateMachine | null>(null);
+  const sessionManagerRef = useRef<SessionManager | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
-  const fetchProfile = async (
-    userId: string,
-    retries = 3
-  ): Promise<UserProfile | null> => {
-    console.log(
-      `[AuthContext] Fetching profile for user: ${userId}, retries left: ${retries}`
-    );
-    
+  // Initialize state machine
+  if (!stateMachineRef.current) {
+    stateMachineRef.current = new AuthStateMachine(AuthState.INITIALIZING);
+    logger.info("AuthContext initialized");
+  }
+
+  const stateMachine = stateMachineRef.current;
+
+  // Fetch profile using ProfileCache
+  const fetchProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
-      // Add timeout to prevent hanging
-      const sessionPromise = supabase.auth.getSession();
-      const timeoutPromise = new Promise<null>((_, reject) =>
-        setTimeout(() => reject(new Error("Session check timeout")), 3000)
-      );
-      
-      const { data: { session: currentSession } } = await Promise.race([
-        sessionPromise,
-        timeoutPromise.then(() => ({ data: { session: null } }))
-      ]) as Awaited<ReturnType<typeof supabase.auth.getSession>>;
-      
-      if (!currentSession) {
-        console.error("[AuthContext] No active session found");
-        if (retries > 0) {
-          console.log("[AuthContext] Retrying profile fetch...");
-          await new Promise((resolve) => setTimeout(resolve, 800));
-          return fetchProfile(userId, retries - 1);
-        }
-        return null;
-      }
-      
-      console.log("[AuthContext] Session verified, access token present:", !!currentSession.access_token);
-      
-      // Fetch profile with timeout
-      const fetchPromise = supabase
-        .from("users")
-        .select("*")
-        .eq("id", userId)
-        .single();
-        
-      const fetchTimeout = new Promise<null>((_, reject) =>
-        setTimeout(() => reject(new Error("Profile fetch timeout")), 5000)
-      );
-      
-      const result = await Promise.race([
-        fetchPromise,
-        fetchTimeout.then(() => ({ data: null, error: { message: "Timeout" } }))
-      ]);
-      
-      const { data, error } = result as { data: UserProfile | null; error: { message: string; code?: string } | null };
+      logger.info("Fetching profile", { userId });
 
-      if (error) {
-        console.error("[AuthContext] Profile fetch error:", error);
-        
-        // If it's a timeout or network error, retry
-        if (error.message === "Timeout" && retries > 0) {
-          console.log(`[AuthContext] Fetch timed out, retrying... (${retries} attempts left)`);
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          return fetchProfile(userId, retries - 1);
-        }
-        
-        // If profile not found and we have retries, wait and try again
-        if (error.code === "PGRST116" && retries > 0) {
-          console.log(
-            `[AuthContext] Profile not found, retrying... (${retries} attempts left)`
-          );
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          return fetchProfile(userId, retries - 1);
-        }
-        
-        console.error("[AuthContext] Profile fetch failed permanently:", error);
+      const profileData = await profileCache.getProfile(userId, supabase);
+
+      if (!profileData) {
+        logger.warn("Profile not found", { userId });
         return null;
       }
 
-      console.log("[AuthContext] Profile fetched successfully:", data);
-      return data as UserProfile;
-    } catch (error) {
-      console.error("[AuthContext] Unexpected error in fetchProfile:", error);
-      if (retries > 0) {
-        console.log(
-          `[AuthContext] Retrying due to exception... (${retries} attempts left)`
-        );
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        return fetchProfile(userId, retries - 1);
-      }
+      logger.info("Profile fetched successfully", { userId });
+      return profileData;
+    } catch (err) {
+      const authError = toAuthError(err, "fetchProfile");
+      logger.error("Profile fetch failed", authError);
+      setError(authError);
       return null;
     }
   };
 
+  // Refresh profile
   const refreshProfile = async () => {
-    if (user) {
-      const profileData = await fetchProfile(user.id);
-      setProfile(profileData);
+    if (!user) {
+      logger.warn("Cannot refresh profile: no user");
+      return;
+    }
+
+    logger.info("Refreshing profile", { userId: user.id });
+
+    // Invalidate cache first
+    profileCache.invalidate(user.id);
+
+    // Fetch fresh profile
+    const profileData = await fetchProfile(user.id);
+    setProfile(profileData);
+  };
+
+  // Refresh session
+  const refreshSession = async () => {
+    console.log("🔄 AuthContext.refreshSession() called");
+    
+    if (!sessionManagerRef.current) {
+      console.error("❌ No session manager available");
+      logger.warn("Cannot refresh session: no session manager");
+      return;
+    }
+
+    console.log("📞 Calling sessionManager.refreshSession()...");
+    logger.info("Refreshing session");
+
+    const newSession = await sessionManagerRef.current.refreshSession();
+
+    if (newSession) {
+      console.log("✅ Session refresh successful in AuthContext");
+      console.log("Updating session state...");
+      setSession(newSession);
+      setSessionExpiry(
+        newSession.expires_at ? new Date(newSession.expires_at * 1000) : null
+      );
+      console.log("Session state updated:", {
+        expiresAt: newSession.expires_at,
+        expiryDate: new Date(newSession.expires_at! * 1000).toLocaleString(),
+      });
+      logger.info("Session refreshed successfully");
+    } else {
+      console.error("❌ Session refresh failed in AuthContext");
+      logger.error("Session refresh failed");
+      const authError = toAuthError(
+        new Error("Failed to refresh session"),
+        "refreshSession"
+      );
+      setError(authError);
     }
   };
 
+  // Clear error
+  const clearError = () => {
+    setError(null);
+    logger.debug("Error cleared");
+  };
+
+  // Handle session expiry
+  const handleSessionExpiry = () => {
+    logger.info("Session expired, signing out");
+
+    stateMachine.transition(AuthState.EXPIRED);
+
+    // Sign out
+    signOut();
+  };
+
+  // Handle session warning (5 minutes before expiry)
+  const handleSessionWarning = () => {
+    logger.warn("Session expiring soon");
+
+    console.log("🚨 handleSessionWarning called!");
+    
+    // Calculate actual time remaining
+    const timeRemaining = sessionManagerRef.current?.getTimeUntilExpiry() || 0;
+    const timeRemainingSeconds = Math.floor(timeRemaining / 1000);
+    
+    console.log("Time remaining (ms):", timeRemaining);
+    console.log("Time remaining (seconds):", timeRemainingSeconds);
+
+    // Show expiry warning modal
+    setShowExpiryWarning(true);
+    setExpiryTimeRemaining(timeRemainingSeconds);
+    
+    console.log("showExpiryWarning set to:", true);
+    console.log("expiryTimeRemaining set to:", timeRemainingSeconds);
+  };
+
+  // Handle stay signed in
+  const handleStaySignedIn = async () => {
+    console.log("👤 User clicked 'Stay Signed In' button");
+    console.log("Closing modal...");
+    setShowExpiryWarning(false);
+    console.log("Calling refreshSession...");
+    await refreshSession();
+    console.log("✅ Stay signed in flow complete");
+  };
+
+  // Handle sign out from warning
+  const handleSignOutFromWarning = async () => {
+    setShowExpiryWarning(false);
+    await signOut();
+  };
+
+  // Sign out
+  const signOut = async () => {
+    logger.info("Signing out");
+
+    // Transition to signing out state
+    stateMachine.transition(AuthState.SIGNING_OUT);
+
+    try {
+      // Stop session manager
+      if (sessionManagerRef.current) {
+        sessionManagerRef.current.stopMonitoring();
+      }
+
+      // Stop activity tracker
+      activityTracker.stop();
+
+      // Clear profile cache
+      profileCache.clear();
+
+      // Set a timeout for the sign out operation
+      const signOutPromise = supabase.auth.signOut();
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Sign out timeout")), 5000)
+      );
+
+      // Race between sign out and timeout
+      await Promise.race([signOutPromise, timeoutPromise]);
+
+      logger.info("Sign out successful");
+    } catch (err) {
+      logger.error("Error signing out", err);
+      // Continue anyway - we'll clear the local state
+    } finally {
+      // Always clear local state and redirect, even if sign out fails
+      setUser(null);
+      setProfile(null);
+      setSession(null);
+      setSessionExpiry(null);
+      setLastActivity(null);
+
+      // Clear all Supabase cookies manually
+      if (typeof document !== "undefined") {
+        document.cookie.split(";").forEach((c) => {
+          const cookieName = c.split("=")[0].trim();
+          if (cookieName.startsWith("sb-")) {
+            document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+          }
+        });
+      }
+
+      // Transition to unauthenticated
+      stateMachine.transition(AuthState.UNAUTHENTICATED);
+
+      router.push("/");
+      router.refresh();
+    }
+  };
+
+  // Initialize auth state
   useEffect(() => {
+    logger.info("Initializing auth state");
+
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        fetchProfile(session.user.id).then(setProfile);
+        logger.info("Initial session found", { userId: session.user.id });
+
+        // Fetch profile
+        const profileData = await fetchProfile(session.user.id);
+        setProfile(profileData);
+
+        // Check if user is banned
+        if (profileData?.is_banned) {
+          logger.warn("User is banned", { userId: session.user.id });
+          await supabase.auth.signOut();
+          router.push("/auth/banned");
+          return;
+        }
+
+        // Set session expiry
+        if (session.expires_at) {
+          setSessionExpiry(new Date(session.expires_at * 1000));
+        }
+
+        // Initialize session manager
+        console.log("🔧 Initializing SessionManager with callbacks");
+        sessionManagerRef.current = new SessionManager(
+          supabase,
+          handleSessionExpiry,
+          handleSessionWarning,
+          activityTracker
+        );
+
+        // Start monitoring session
+        console.log("▶️ Starting session monitoring");
+        sessionManagerRef.current.startMonitoring(session);
+        
+        // Debug: Log session manager stats
+        const stats = sessionManagerRef.current.getStats();
+        console.log("📈 SessionManager stats:", stats);
+
+        // Transition to authenticated
+        stateMachine.transition(AuthState.AUTHENTICATED, {
+          userId: session.user.id,
+        });
+
+        // Update last activity
+        setLastActivity(activityTracker.getLastActivity());
+      } else {
+        logger.info("No initial session found");
+        stateMachine.transition(AuthState.UNAUTHENTICATED);
       }
 
       setLoading(false);
@@ -148,80 +331,126 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(
-        "[AuthContext] Auth state changed:",
-        event,
-        "User:",
-        session?.user?.email
-      );
+      logger.info("Auth state changed", { event, userId: session?.user?.id });
 
       setSession(session);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        console.log("[AuthContext] User found, fetching profile...");
-        // Don't set loading false until profile is fetched
+        // Fetch profile
         const profileData = await fetchProfile(session.user.id);
-        console.log("[AuthContext] Profile data received:", profileData);
         setProfile(profileData);
 
         // Check if user is banned
         if (profileData?.is_banned) {
-          console.log("[AuthContext] User is banned, signing out...");
+          logger.warn("User is banned", { userId: session.user.id });
           await supabase.auth.signOut();
           router.push("/auth/banned");
-          return; // Don't set loading false if redirecting
+          return;
         }
 
-        console.log("[AuthContext] Setting loading to false");
+        // Set session expiry
+        if (session.expires_at) {
+          setSessionExpiry(new Date(session.expires_at * 1000));
+        }
+
+        // Initialize or restart session manager
+        if (!sessionManagerRef.current) {
+          console.log("🔧 Initializing SessionManager (auth state change)");
+          sessionManagerRef.current = new SessionManager(
+            supabase,
+            handleSessionExpiry,
+            handleSessionWarning,
+            activityTracker
+          );
+        }
+
+        console.log("▶️ Starting session monitoring (auth state change)");
+        sessionManagerRef.current.startMonitoring(session);
+        
+        // Debug: Log session manager stats
+        const stats = sessionManagerRef.current.getStats();
+        console.log("📈 SessionManager stats (auth state change):", stats);
+
+        // Transition to authenticated
+        if (!stateMachine.isAuthenticated()) {
+          stateMachine.transition(AuthState.AUTHENTICATED, {
+            userId: session.user.id,
+          });
+        }
+
+        // Update last activity
+        setLastActivity(activityTracker.getLastActivity());
+
         setLoading(false);
       } else {
-        console.log("[AuthContext] No user, clearing profile and setting loading to false");
+        logger.info("User signed out");
+
+        // Stop session manager
+        if (sessionManagerRef.current) {
+          sessionManagerRef.current.stopMonitoring();
+        }
+
+        // Stop activity tracker
+        activityTracker.stop();
+
+        // Clear state
         setProfile(null);
+        setSessionExpiry(null);
+        setLastActivity(null);
+
+        // Transition to unauthenticated
+        if (!stateMachine.isUnauthenticated()) {
+          stateMachine.transition(AuthState.UNAUTHENTICATED);
+        }
+
         setLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Subscribe to activity events
+    const unsubscribeActivity = activityTracker.onActivity(() => {
+      setLastActivity(activityTracker.getLastActivity());
+    });
+
+    // Cleanup
+    return () => {
+      subscription.unsubscribe();
+      unsubscribeActivity();
+
+      // Stop managers
+      if (sessionManagerRef.current) {
+        sessionManagerRef.current.stopMonitoring();
+      }
+      activityTracker.stop();
+    };
   }, [router, supabase.auth]);
-
-  const signOut = async () => {
-    try {
-      // Set a timeout for the sign out operation
-      const signOutPromise = supabase.auth.signOut();
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Sign out timeout")), 5000)
-      );
-
-      // Race between sign out and timeout
-      await Promise.race([signOutPromise, timeoutPromise]);
-    } catch (error) {
-      console.error("Error signing out:", error);
-      // Continue anyway - we'll clear the local state
-    } finally {
-      // Always clear local state and redirect, even if sign out fails
-      setUser(null);
-      setProfile(null);
-      setSession(null);
-
-      // Clear all Supabase cookies manually
-      document.cookie.split(";").forEach((c) => {
-        const cookieName = c.split("=")[0].trim();
-        if (cookieName.startsWith("sb-")) {
-          document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-        }
-      });
-
-      router.push("/");
-      router.refresh();
-    }
-  };
 
   return (
     <AuthContext.Provider
-      value={{ user, profile, session, loading, signOut, refreshProfile }}
+      value={{
+        user,
+        profile,
+        session,
+        loading,
+        error,
+        sessionExpiry,
+        lastActivity,
+        signOut,
+        refreshProfile,
+        refreshSession,
+        clearError,
+      }}
     >
       {children}
+      
+      {/* Session Expiry Warning Modal */}
+      <SessionExpiryWarning
+        isOpen={showExpiryWarning}
+        timeRemaining={expiryTimeRemaining}
+        onStaySignedIn={handleStaySignedIn}
+        onSignOut={handleSignOutFromWarning}
+      />
     </AuthContext.Provider>
   );
 }

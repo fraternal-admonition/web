@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       const { data: existingProfile, error: profileCheckError } =
         await adminClient
           .from("users")
-          .select("id")
+          .select("id, created_at")
           .eq("id", data.user.id)
           .single();
 
@@ -32,10 +32,14 @@ export async function GET(request: NextRequest) {
       console.log("Existing profile:", existingProfile);
       console.log("Profile check error:", profileCheckError);
 
+      // Track if this is a new user (for welcome email)
+      let isNewUser = false;
+
       // Create profile if it doesn't exist (for OAuth users)
       // Note: If no profile exists, profileCheckError will be "PGRST116" (not found), which is expected
       if (!existingProfile) {
         console.log("Creating profile for OAuth user:", data.user.id);
+        isNewUser = true;
 
         const { data: newProfile, error: profileError } = await adminClient
           .from("users")
@@ -59,14 +63,20 @@ export async function GET(request: NextRequest) {
         }
       } else {
         console.log("Profile already exists for user:", data.user.id);
+        // Check if user was just created (within last 10 seconds) - this handles email verification
+        const profileAge = Date.now() - new Date(existingProfile.created_at).getTime();
+        isNewUser = profileAge < 10000; // 10 seconds
       }
 
-      // Send welcome email after successful verification (non-blocking)
-      if (data.user.email) {
+      // Send welcome email only for new users (non-blocking)
+      if (isNewUser && data.user.email) {
+        console.log("Sending welcome email to new user:", data.user.email);
         sendWelcomeEmail(data.user.email).catch((err) => {
           console.error("Failed to send welcome email:", err);
           // Don't block the redirect if email fails
         });
+      } else if (!isNewUser) {
+        console.log("Skipping welcome email for returning user:", data.user.email);
       }
 
       // Redirect to next URL
