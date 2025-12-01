@@ -2,13 +2,13 @@ import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import {
-
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
     verifySubmissionOwnership,
     verifyPeerVerificationNotRequested,
     checkPeerVerificationRateLimit,
 } from '@/lib/ai-screening/security';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2025-09-30.clover',

@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import {
-
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
   validateEvaluation,
   submitEvaluation,
   checkVerificationCompletion,
   triggerResultsCalculation,
 } from '@/lib/peer-verification/evaluation-service';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // Store last submission timestamps per user (in-memory for now)
 // In production, this should use Redis or database
