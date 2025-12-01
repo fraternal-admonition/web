@@ -3,6 +3,9 @@ import { checkAdminAuth } from "@/lib/admin-auth";
 import { createAdminClient } from "@/lib/supabase/server";
 import { sanitizeHTML } from "@/lib/security/sanitize";
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
