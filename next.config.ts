@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-import path from "path";
 
 const nextConfig: NextConfig = {
   // Ignore TypeScript errors during build
@@ -10,6 +9,13 @@ const nextConfig: NextConfig = {
   // Ignore ESLint errors during build
   eslint: {
     ignoreDuringBuilds: true,
+  },
+
+  // Experimental features for better API route handling
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
   },
   
   // Configure allowed image domains for Next.js Image component
