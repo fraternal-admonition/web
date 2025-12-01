@@ -16,6 +16,12 @@ export default async function AdminDashboard() {
     supabase.from("illustrations").select("id", { count: "exact", head: true }).eq("is_active", true),
   ]);
 
+  // Fetch peer verification count
+  const { count: peerVerificationCount } = await supabase
+    .from("submissions")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "PEER_VERIFICATION_PENDING");
+
   const stats = [
     {
       name: "CMS Pages",
@@ -34,6 +40,12 @@ export default async function AdminDashboard() {
       value: contestsResult.count || 0,
       href: "/admin/contests",
       description: "Manage Letters to Goliath contests and phases",
+    },
+    {
+      name: "Peer Verification",
+      value: peerVerificationCount || 0,
+      href: "/admin/peer-verification",
+      description: "Monitor peer verification requests and reviewers",
     },
     {
       name: "Illustrations",

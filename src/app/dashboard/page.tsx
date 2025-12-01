@@ -58,6 +58,15 @@ export default async function DashboardPage() {
   const pendingSubmissions = submissions?.filter(s => s.status === "PENDING_PAYMENT") || [];
   const activeSubmissions = submissions?.filter(s => s.status !== "PENDING_PAYMENT") || [];
   const totalSubmissions = submissions?.length || 0;
+
+  // Check if any contest is in PEER_REVIEW phase
+  const { data: peerReviewContests } = await supabase
+    .from('contests')
+    .select('id, phase')
+    .eq('phase', 'PEER_REVIEW')
+    .limit(1);
+  
+  const isPeerReviewPhase = peerReviewContests && peerReviewContests.length > 0;
   
   // Count by status for stats
   const submittedCount = submissions?.filter(s => 
@@ -168,6 +177,24 @@ export default async function DashboardPage() {
             </a>
           </div>
         </div>
+
+        {/* Peer Review Tasks Section (Phase 5) - Only visible during PEER_REVIEW phase */}
+        {isPeerReviewPhase && (
+          <div className="mt-4 bg-white border border-[#E5E5E0] rounded-lg p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-serif text-lg text-[#222] mb-2">Peer Review Tasks</h3>
+                <p className="text-sm text-[#666]">Evaluate fellow submissions to help determine finalists</p>
+              </div>
+              <a
+                href="/dashboard/peer-review-tasks"
+                className="inline-block bg-[#6A1B9A] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#8E24AA] transition-colors"
+              >
+                View Tasks
+              </a>
+            </div>
+          </div>
+        )}
 
         {/* All Submissions List (excluding pending payment) */}
         {activeSubmissions.length > 0 && (

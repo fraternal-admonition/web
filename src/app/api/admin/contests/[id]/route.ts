@@ -86,6 +86,21 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     const body = await request.json();
 
+    // Check if phase is being updated to PEER_REVIEW
+    const isChangingToPeerReview = body.phase === 'PEER_REVIEW';
+    
+    // Get current phase before update to check if it's actually changing
+    let oldPhase = null;
+    if (isChangingToPeerReview) {
+      const adminSupabase = await createAdminClient();
+      const { data: currentContest } = await adminSupabase
+        .from('contests')
+        .select('phase')
+        .eq('id', id)
+        .single();
+      oldPhase = currentContest?.phase;
+    }
+
     // Use admin client for update to bypass RLS
     const adminSupabase = await createAdminClient();
     const { data: contest, error } = await adminSupabase
@@ -101,6 +116,23 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         { error: "Failed to update contest" },
         { status: 500 }
       );
+    }
+
+    // If phase changed TO PEER_REVIEW (not if already PEER_REVIEW), trigger assignments
+    if (isChangingToPeerReview && oldPhase !== 'PEER_REVIEW') {
+      console.log('🚀 Triggering peer review assignments for contest:', id);
+      
+      // Import and execute assignment service
+      const { executePeerReviewAssignments } = await import('@/lib/peer-review/assignment-service');
+      
+      // Run asynchronously (don't block the response)
+      executePeerReviewAssignments(id, 10, 7)
+        .then(result => {
+          console.log('✅ Peer review assignments created:', result);
+        })
+        .catch(error => {
+          console.error('❌ Error creating peer review assignments:', error);
+        });
     }
 
     return NextResponse.json({ contest });

@@ -1688,3 +1688,566 @@ Questions? Contact us at support@fraternaladmonition.com
     return { success: false, error };
   }
 }
+
+/**
+ * Send peer review assignment notification email (Phase 5)
+ * This is for the contest-wide peer review phase, not peer verification
+ */
+export async function sendPeerReviewAssignmentEmail(
+  email: string,
+  reviewerData: {
+    reviewer_name?: string;
+    assignment_count: number;
+    deadline: string; // ISO date string
+  }
+) {
+  const dashboardUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/peer-review-tasks`;
+  
+  // Format deadline as readable date
+  const deadlineDate = new Date(reviewerData.deadline);
+  const formattedDeadline = deadlineDate.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  
+  // Calculate days until deadline
+  const now = new Date();
+  const daysUntilDeadline = Math.ceil((deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+  try {
+    await resend.emails.send({
+      from:
+        process.env.EMAIL_FROM ||
+        "Fraternal Admonition <noreply@fraternaladmonition.com>",
+      to: email,
+      subject: `Peer Review Assignment - ${reviewerData.assignment_count} Submissions to Evaluate`,
+      text: `
+PEER REVIEW ASSIGNMENT
+
+${reviewerData.reviewer_name ? `Hello ${reviewerData.reviewer_name},` : 'Hello,'}
+
+The contest has entered the Peer Review phase! You have been assigned ${reviewerData.assignment_count} submissions to evaluate.
+
+Assignment Details:
+- Number of Submissions: ${reviewerData.assignment_count}
+- Deadline: ${formattedDeadline} (${daysUntilDeadline} days)
+- Time Required: Approximately ${reviewerData.assignment_count * 15} minutes
+
+What is Peer Review?
+
+All submissions that passed AI filtering are now being evaluated by fellow contestants. Your reviews help determine which submissions advance to public voting.
+
+Your Role:
+
+1. Read Each Submission
+   Carefully read the assigned letters and evaluate them based on four criteria.
+
+2. Rate on Four Criteria (1-5 scale)
+   - Clarity: How clear and understandable is the writing?
+   - Argument: How strong and well-supported is the argument?
+   - Style: How engaging and effective is the writing style?
+   - Moral Depth: How profound is the moral or philosophical insight?
+
+3. Provide Brief Feedback
+   Write a short comment (max 100 characters) for the author.
+
+Important Notes:
+
+- All reviews are anonymous - authors won't know who reviewed them
+- You will NOT see author identities while reviewing
+- You will NOT see AI scores or other reviewers' opinions
+- Complete all ${reviewerData.assignment_count} reviews by ${formattedDeadline} to avoid disqualification
+- Your own submission depends on completing your review obligations
+
+Start Reviewing: ${dashboardUrl}
+
+Questions? Contact us at support@fraternaladmonition.com
+
+© 2025 Fraternal Admonition. All rights reserved.
+      `,
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="font-family: 'Georgia', serif; line-height: 1.6; color: #222; background-color: #F9F9F7; margin: 0; padding: 0;">
+            <div style="max-width: 600px; margin: 40px auto; background: white; border: 1px solid #E5E5E0; border-radius: 8px; overflow: hidden;">
+              <!-- Header -->
+              <div style="background: linear-gradient(135deg, #6A1B9A 0%, #8E24AA 100%); padding: 30px; text-align: center;">
+                <h1 style="margin: 0; font-size: 24px; color: white; font-family: 'Playfair Display', Georgia, serif;">
+                  Peer Review <span style="color: #FFE082;">Assignment</span>
+                </h1>
+              </div>
+              
+              <!-- Content -->
+              <div style="padding: 40px 30px;">
+                <p style="margin: 0 0 20px 0; font-size: 16px; color: #444;">
+                  ${reviewerData.reviewer_name ? `Hello <strong>${reviewerData.reviewer_name}</strong>,` : 'Hello,'}
+                </p>
+                
+                <p style="margin: 0 0 30px 0; font-size: 16px; color: #444;">
+                  The contest has entered the <strong>Peer Review phase</strong>! You have been assigned <strong>${reviewerData.assignment_count} submissions</strong> to evaluate.
+                </p>
+                
+                <h2 style="font-size: 18px; margin: 0 0 15px 0; color: #222; font-family: 'Playfair Display', Georgia, serif;">
+                  Assignment Details
+                </h2>
+                
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                  <tr>
+                    <td style="padding: 12px 0; border-bottom: 1px solid #E5E5E0; color: #666; font-size: 14px;">Number of Submissions</td>
+                    <td style="padding: 12px 0; border-bottom: 1px solid #E5E5E0; color: #222; font-size: 16px; text-align: right; font-weight: bold;">${reviewerData.assignment_count}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 12px 0; border-bottom: 1px solid #E5E5E0; color: #666; font-size: 14px;">Deadline</td>
+                    <td style="padding: 12px 0; border-bottom: 1px solid #E5E5E0; color: #222; font-size: 14px; text-align: right; font-weight: 500;">${formattedDeadline}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 12px 0; color: #666; font-size: 14px;">Time Required</td>
+                    <td style="padding: 12px 0; color: #6A1B9A; font-size: 14px; text-align: right; font-weight: 500;">~${reviewerData.assignment_count * 15} minutes</td>
+                  </tr>
+                </table>
+                
+                <div style="background: #F3E5F5; border: 1px solid #CE93D8; border-radius: 6px; padding: 15px; margin-bottom: 30px;">
+                  <p style="margin: 0 0 10px 0; font-size: 14px; color: #6A1B9A; font-weight: 600;">
+                    📋 What is Peer Review?
+                  </p>
+                  <p style="margin: 0; font-size: 13px; color: #6A1B9A;">
+                    All submissions that passed AI filtering are now being evaluated by fellow contestants. Your reviews help determine which submissions advance to public voting.
+                  </p>
+                </div>
+                
+                <h2 style="font-size: 18px; margin: 0 0 15px 0; color: #222; font-family: 'Playfair Display', Georgia, serif;">
+                  Your Role
+                </h2>
+                
+                <div style="margin-bottom: 20px;">
+                  <div style="display: flex; align-items: start; margin-bottom: 15px;">
+                    <div style="flex-shrink: 0; width: 28px; height: 28px; background: #6A1B9A; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; margin-right: 12px;">1</div>
+                    <div>
+                      <p style="margin: 0 0 4px 0; font-size: 15px; font-weight: 600; color: #222;">Read Each Submission</p>
+                      <p style="margin: 0; font-size: 14px; color: #666;">Carefully read the assigned letters and evaluate them based on four criteria.</p>
+                    </div>
+                  </div>
+                  
+                  <div style="display: flex; align-items: start; margin-bottom: 15px;">
+                    <div style="flex-shrink: 0; width: 28px; height: 28px; background: #6A1B9A; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; margin-right: 12px;">2</div>
+                    <div>
+                      <p style="margin: 0 0 4px 0; font-size: 15px; font-weight: 600; color: #222;">Rate on Four Criteria (1-5 scale)</p>
+                      <ul style="margin: 4px 0 0 0; padding-left: 20px; font-size: 13px; color: #666;">
+                        <li><strong>Clarity:</strong> How clear and understandable is the writing?</li>
+                        <li><strong>Argument:</strong> How strong and well-supported is the argument?</li>
+                        <li><strong>Style:</strong> How engaging and effective is the writing style?</li>
+                        <li><strong>Moral Depth:</strong> How profound is the moral or philosophical insight?</li>
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div style="display: flex; align-items: start;">
+                    <div style="flex-shrink: 0; width: 28px; height: 28px; background: #C19A43; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; margin-right: 12px;">3</div>
+                    <div>
+                      <p style="margin: 0 0 4px 0; font-size: 15px; font-weight: 600; color: #222;">Provide Brief Feedback</p>
+                      <p style="margin: 0; font-size: 14px; color: #666;">Write a short comment (max 100 characters) for the author.</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div style="background: #FFF9E6; border: 1px solid #FFE082; border-radius: 6px; padding: 15px; margin-bottom: 30px;">
+                  <p style="margin: 0 0 10px 0; font-size: 14px; color: #856404; font-weight: 600;">
+                    ⚠️ Important Notes:
+                  </p>
+                  <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #856404;">
+                    <li style="margin-bottom: 6px;">All reviews are anonymous - authors won't know who reviewed them</li>
+                    <li style="margin-bottom: 6px;">You will NOT see author identities while reviewing</li>
+                    <li style="margin-bottom: 6px;">You will NOT see AI scores or other reviewers' opinions</li>
+                    <li style="margin-bottom: 6px;"><strong>Complete all ${reviewerData.assignment_count} reviews by ${formattedDeadline} to avoid disqualification</strong></li>
+                    <li>Your own submission depends on completing your review obligations</li>
+                  </ul>
+                </div>
+                
+                <div style="text-align: center; margin: 30px 0 20px 0;">
+                  <a href="${dashboardUrl}" 
+                     style="display: inline-block; padding: 14px 32px; background: #6A1B9A; color: white; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: 600;">
+                    Start Reviewing
+                  </a>
+                </div>
+                
+                <hr style="border: none; border-top: 1px solid #E5E5E0; margin: 30px 0;" />
+                
+                <p style="margin: 0; font-size: 13px; color: #888; text-align: center;">
+                  Questions? Contact us at support@fraternaladmonition.com
+                </p>
+              </div>
+              
+              <!-- Footer -->
+              <div style="background: #F3F3EF; padding: 20px 30px; text-align: center; border-top: 1px solid #E5E5E0;">
+                <p style="margin: 0; font-size: 12px; color: #888;">
+                  © 2025 Fraternal Admonition. All rights reserved.
+                </p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error sending peer review assignment email:", error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Send peer review deadline warning email (24h before deadline)
+ * Requirements: 22.2
+ */
+export async function sendPeerReviewDeadlineWarningEmail(
+  email: string,
+  reviewerData: {
+    reviewer_name?: string;
+    assignment_count: number;
+    deadline: string; // ISO date string
+  }
+) {
+  const dashboardUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/peer-review-tasks`;
+  
+  // Format deadline as readable date
+  const deadlineDate = new Date(reviewerData.deadline);
+  const formattedDeadline = deadlineDate.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  });
+
+  try {
+    await resend.emails.send({
+      from:
+        process.env.EMAIL_FROM ||
+        "Fraternal Admonition <noreply@fraternaladmonition.com>",
+      to: email,
+      subject: `⏰ Peer Review Deadline Reminder - 24 Hours Remaining`,
+      text: `
+PEER REVIEW DEADLINE REMINDER
+
+${reviewerData.reviewer_name ? `Hello ${reviewerData.reviewer_name},` : 'Hello,'}
+
+This is a friendly reminder that you have peer review assignments due in 24 hours.
+
+Assignment Status:
+- Pending Reviews: ${reviewerData.assignment_count}
+- Deadline: ${formattedDeadline}
+
+⚠️ IMPORTANT: Complete all reviews by the deadline to avoid disqualification
+
+What Happens if You Miss the Deadline?
+
+If you don't complete all ${reviewerData.assignment_count} reviews by ${formattedDeadline}, your own submission will be automatically disqualified from the contest. This ensures fairness for all participants.
+
+Complete Your Reviews Now: ${dashboardUrl}
+
+Need Help?
+
+If you're having trouble completing your reviews, contact us immediately at support@fraternaladmonition.com
+
+© 2025 Fraternal Admonition. All rights reserved.
+      `,
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="font-family: 'Georgia', serif; line-height: 1.6; color: #222; background-color: #F9F9F7; margin: 0; padding: 0;">
+            <div style="max-width: 600px; margin: 40px auto; background: white; border: 1px solid #E5E5E0; border-radius: 8px; overflow: hidden;">
+              <!-- Header -->
+              <div style="background: linear-gradient(135deg, #F57C00 0%, #FF9800 100%); padding: 30px; text-align: center;">
+                <h1 style="margin: 0; font-size: 24px; color: white; font-family: 'Playfair Display', Georgia, serif;">
+                  ⏰ Deadline <span style="color: #FFF3E0;">Reminder</span>
+                </h1>
+              </div>
+              
+              <!-- Content -->
+              <div style="padding: 40px 30px;">
+                <p style="margin: 0 0 20px 0; font-size: 16px; color: #444;">
+                  ${reviewerData.reviewer_name ? `Hello <strong>${reviewerData.reviewer_name}</strong>,` : 'Hello,'}
+                </p>
+                
+                <p style="margin: 0 0 30px 0; font-size: 16px; color: #444;">
+                  This is a friendly reminder that you have <strong>peer review assignments due in 24 hours</strong>.
+                </p>
+                
+                <h2 style="font-size: 18px; margin: 0 0 15px 0; color: #222; font-family: 'Playfair Display', Georgia, serif;">
+                  Assignment Status
+                </h2>
+                
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                  <tr>
+                    <td style="padding: 12px 0; border-bottom: 1px solid #E5E5E0; color: #666; font-size: 14px;">Pending Reviews</td>
+                    <td style="padding: 12px 0; border-bottom: 1px solid #E5E5E0; color: #F57C00; font-size: 20px; text-align: right; font-weight: bold;">${reviewerData.assignment_count}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 12px 0; color: #666; font-size: 14px;">Deadline</td>
+                    <td style="padding: 12px 0; color: #222; font-size: 14px; text-align: right; font-weight: 500;">${formattedDeadline}</td>
+                  </tr>
+                </table>
+                
+                <div style="background: #FFF3E0; border: 2px solid #F57C00; border-radius: 6px; padding: 20px; margin-bottom: 30px;">
+                  <p style="margin: 0 0 10px 0; font-size: 16px; color: #E65100; font-weight: 700;">
+                    ⚠️ IMPORTANT
+                  </p>
+                  <p style="margin: 0; font-size: 14px; color: #E65100;">
+                    Complete all reviews by the deadline to avoid disqualification
+                  </p>
+                </div>
+                
+                <h2 style="font-size: 18px; margin: 0 0 15px 0; color: #222; font-family: 'Playfair Display', Georgia, serif;">
+                  What Happens if You Miss the Deadline?
+                </h2>
+                
+                <p style="margin: 0 0 20px 0; font-size: 14px; color: #666;">
+                  If you don't complete all <strong>${reviewerData.assignment_count} reviews</strong> by <strong>${formattedDeadline}</strong>, your own submission will be automatically disqualified from the contest. This ensures fairness for all participants.
+                </p>
+                
+                <div style="text-align: center; margin: 30px 0 20px 0;">
+                  <a href="${dashboardUrl}" 
+                     style="display: inline-block; padding: 14px 32px; background: #F57C00; color: white; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: 600;">
+                    Complete Your Reviews Now
+                  </a>
+                </div>
+                
+                <div style="background: #F3F3EF; border-radius: 6px; padding: 15px; margin-top: 30px;">
+                  <p style="margin: 0 0 8px 0; font-size: 14px; color: #222; font-weight: 600;">
+                    Need Help?
+                  </p>
+                  <p style="margin: 0; font-size: 13px; color: #666;">
+                    If you're having trouble completing your reviews, contact us immediately at support@fraternaladmonition.com
+                  </p>
+                </div>
+              </div>
+              
+              <!-- Footer -->
+              <div style="background: #F3F3EF; padding: 20px 30px; text-align: center; border-top: 1px solid #E5E5E0;">
+                <p style="margin: 0; font-size: 12px; color: #888;">
+                  © 2025 Fraternal Admonition. All rights reserved.
+                </p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error sending peer review deadline warning email:", error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Send peer review reassignment notification email
+ * Requirements: 22.5
+ */
+export async function sendPeerReviewReassignmentEmail(
+  email: string,
+  reviewerData: {
+    reviewer_name?: string;
+    deadline: string; // ISO date string
+  }
+) {
+  const dashboardUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/dashboard/peer-review-tasks`;
+  
+  // Format deadline as readable date
+  const deadlineDate = new Date(reviewerData.deadline);
+  const formattedDeadline = deadlineDate.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  
+  // Calculate days until deadline
+  const now = new Date();
+  const daysUntilDeadline = Math.ceil((deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+  try {
+    await resend.emails.send({
+      from:
+        process.env.EMAIL_FROM ||
+        "Fraternal Admonition <noreply@fraternaladmonition.com>",
+      to: email,
+      subject: `New Peer Review Assignment - Reassigned Due to Expiration`,
+      text: `
+NEW PEER REVIEW ASSIGNMENT
+
+${reviewerData.reviewer_name ? `Hello ${reviewerData.reviewer_name},` : 'Hello,'}
+
+You have been assigned a new peer review due to another reviewer's expired assignment.
+
+Assignment Details:
+- Number of Submissions: 1
+- Deadline: ${formattedDeadline} (${daysUntilDeadline} days)
+- Time Required: Approximately 15 minutes
+
+Why Was This Reassigned?
+
+A previous reviewer did not complete their review by the deadline, so we've reassigned this submission to you to ensure all submissions receive fair evaluation.
+
+Your Role:
+
+1. Read the Submission
+   Carefully read the assigned letter and evaluate it based on four criteria.
+
+2. Rate on Four Criteria (1-5 scale)
+   - Clarity: How clear and understandable is the writing?
+   - Argument: How strong and well-supported is the argument?
+   - Style: How engaging and effective is the writing style?
+   - Moral Depth: How profound is the moral or philosophical insight?
+
+3. Provide Brief Feedback
+   Write a short comment (max 100 characters) for the author.
+
+Important: Complete this review by ${formattedDeadline} to avoid disqualification.
+
+Start Reviewing: ${dashboardUrl}
+
+Questions? Contact us at support@fraternaladmonition.com
+
+© 2025 Fraternal Admonition. All rights reserved.
+      `,
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="font-family: 'Georgia', serif; line-height: 1.6; color: #222; background-color: #F9F9F7; margin: 0; padding: 0;">
+            <div style="max-width: 600px; margin: 40px auto; background: white; border: 1px solid #E5E5E0; border-radius: 8px; overflow: hidden;">
+              <!-- Header -->
+              <div style="background: linear-gradient(135deg, #6A1B9A 0%, #8E24AA 100%); padding: 30px; text-align: center;">
+                <h1 style="margin: 0; font-size: 24px; color: white; font-family: 'Playfair Display', Georgia, serif;">
+                  New Peer Review <span style="color: #FFE082;">Assignment</span>
+                </h1>
+              </div>
+              
+              <!-- Content -->
+              <div style="padding: 40px 30px;">
+                <p style="margin: 0 0 20px 0; font-size: 16px; color: #444;">
+                  ${reviewerData.reviewer_name ? `Hello <strong>${reviewerData.reviewer_name}</strong>,` : 'Hello,'}
+                </p>
+                
+                <p style="margin: 0 0 30px 0; font-size: 16px; color: #444;">
+                  You have been assigned a <strong>new peer review</strong> due to another reviewer's expired assignment.
+                </p>
+                
+                <h2 style="font-size: 18px; margin: 0 0 15px 0; color: #222; font-family: 'Playfair Display', Georgia, serif;">
+                  Assignment Details
+                </h2>
+                
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                  <tr>
+                    <td style="padding: 12px 0; border-bottom: 1px solid #E5E5E0; color: #666; font-size: 14px;">Number of Submissions</td>
+                    <td style="padding: 12px 0; border-bottom: 1px solid #E5E5E0; color: #222; font-size: 16px; text-align: right; font-weight: bold;">1</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 12px 0; border-bottom: 1px solid #E5E5E0; color: #666; font-size: 14px;">Deadline</td>
+                    <td style="padding: 12px 0; border-bottom: 1px solid #E5E5E0; color: #222; font-size: 14px; text-align: right; font-weight: 500;">${formattedDeadline}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 12px 0; color: #666; font-size: 14px;">Time Required</td>
+                    <td style="padding: 12px 0; color: #6A1B9A; font-size: 14px; text-align: right; font-weight: 500;">~15 minutes</td>
+                  </tr>
+                </table>
+                
+                <div style="background: #F3E5F5; border: 1px solid #CE93D8; border-radius: 6px; padding: 15px; margin-bottom: 30px;">
+                  <p style="margin: 0 0 10px 0; font-size: 14px; color: #6A1B9A; font-weight: 600;">
+                    📋 Why Was This Reassigned?
+                  </p>
+                  <p style="margin: 0; font-size: 13px; color: #6A1B9A;">
+                    A previous reviewer did not complete their review by the deadline, so we've reassigned this submission to you to ensure all submissions receive fair evaluation.
+                  </p>
+                </div>
+                
+                <h2 style="font-size: 18px; margin: 0 0 15px 0; color: #222; font-family: 'Playfair Display', Georgia, serif;">
+                  Your Role
+                </h2>
+                
+                <div style="margin-bottom: 20px;">
+                  <div style="display: flex; align-items: start; margin-bottom: 15px;">
+                    <div style="flex-shrink: 0; width: 28px; height: 28px; background: #6A1B9A; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; margin-right: 12px;">1</div>
+                    <div>
+                      <p style="margin: 0 0 4px 0; font-size: 15px; font-weight: 600; color: #222;">Read the Submission</p>
+                      <p style="margin: 0; font-size: 14px; color: #666;">Carefully read the assigned letter and evaluate it based on four criteria.</p>
+                    </div>
+                  </div>
+                  
+                  <div style="display: flex; align-items: start; margin-bottom: 15px;">
+                    <div style="flex-shrink: 0; width: 28px; height: 28px; background: #6A1B9A; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; margin-right: 12px;">2</div>
+                    <div>
+                      <p style="margin: 0 0 4px 0; font-size: 15px; font-weight: 600; color: #222;">Rate on Four Criteria (1-5 scale)</p>
+                      <ul style="margin: 4px 0 0 0; padding-left: 20px; font-size: 13px; color: #666;">
+                        <li><strong>Clarity:</strong> How clear and understandable is the writing?</li>
+                        <li><strong>Argument:</strong> How strong and well-supported is the argument?</li>
+                        <li><strong>Style:</strong> How engaging and effective is the writing style?</li>
+                        <li><strong>Moral Depth:</strong> How profound is the moral or philosophical insight?</li>
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div style="display: flex; align-items: start;">
+                    <div style="flex-shrink: 0; width: 28px; height: 28px; background: #C19A43; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; margin-right: 12px;">3</div>
+                    <div>
+                      <p style="margin: 0 0 4px 0; font-size: 15px; font-weight: 600; color: #222;">Provide Brief Feedback</p>
+                      <p style="margin: 0; font-size: 14px; color: #666;">Write a short comment (max 100 characters) for the author.</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div style="background: #FFF9E6; border: 1px solid #FFE082; border-radius: 6px; padding: 15px; margin-bottom: 30px;">
+                  <p style="margin: 0; font-size: 13px; color: #856404;">
+                    <strong>Important:</strong> Complete this review by ${formattedDeadline} to avoid disqualification.
+                  </p>
+                </div>
+                
+                <div style="text-align: center; margin: 30px 0 20px 0;">
+                  <a href="${dashboardUrl}" 
+                     style="display: inline-block; padding: 14px 32px; background: #6A1B9A; color: white; text-decoration: none; border-radius: 4px; font-size: 16px; font-weight: 600;">
+                    Start Reviewing
+                  </a>
+                </div>
+                
+                <hr style="border: none; border-top: 1px solid #E5E5E0; margin: 30px 0;" />
+                
+                <p style="margin: 0; font-size: 13px; color: #888; text-align: center;">
+                  Questions? Contact us at support@fraternaladmonition.com
+                </p>
+              </div>
+              
+              <!-- Footer -->
+              <div style="background: #F3F3EF; padding: 20px 30px; text-align: center; border-top: 1px solid #E5E5E0;">
+                <p style="margin: 0; font-size: 12px; color: #888;">
+                  © 2025 Fraternal Admonition. All rights reserved.
+                </p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error sending peer review reassignment email:", error);
+    return { success: false, error };
+  }
+}
