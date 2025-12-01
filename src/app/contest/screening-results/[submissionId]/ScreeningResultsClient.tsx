@@ -25,8 +25,15 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import PeerVerificationResults from '@/components/peer-verification/PeerVerificationResults';
+import PeerReviewResults from '@/components/peer-review/PeerReviewResults';
 
-export default function ScreeningResultsClient({ initialSubmission }: { initialSubmission: any }) {
+export default function ScreeningResultsClient({ 
+    initialSubmission, 
+    peerReviewData 
+}: { 
+    initialSubmission: any;
+    peerReviewData: any;
+}) {
     const [submission, setSubmission] = useState(initialSubmission);
     const [userChoice, setUserChoice] = useState<string | null>(null);
     const [pollingCount, setPollingCount] = useState(0);
@@ -601,6 +608,23 @@ export default function ScreeningResultsClient({ initialSubmission }: { initialS
                         transition={{ duration: 0.8, delay: 0.3 }}
                     >
                         <PeerVerificationResults result={peerVerificationResult} />
+                    </motion.div>
+                )}
+
+                {/* Peer Review Results */}
+                {peerReviewData && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.4 }}
+                        className="mb-12"
+                    >
+                        <PeerReviewResults
+                            peerScore={peerReviewData.peerScore}
+                            criterionMeans={peerReviewData.criterionMeans}
+                            reviewCount={peerReviewData.reviewCount}
+                            comments={peerReviewData.comments}
+                        />
                     </motion.div>
                 )}
 

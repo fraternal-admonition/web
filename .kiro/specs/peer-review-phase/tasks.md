@@ -397,8 +397,8 @@ This implementation plan breaks down the Peer Review Phase into discrete, manage
     - Set 6-hour schedule for warning emails
     - _Requirements: 11.1, 22.2_
 
-- [ ] 13. Results Display - UI Components
-  - [ ] 13.1 Create peer review results component
+- [x] 13. Results Display - UI Components
+  - [x] 13.1 Create peer review results component
     - Create `src/components/peer-review/PeerReviewResults.tsx`
     - Display results header with score badge and rank
     - Display criteria breakdown (clarity, argument, style, moral_depth)
@@ -407,20 +407,20 @@ This implementation plan breaks down the Peer Review Phase into discrete, manage
     - Only render if results visibility is enabled by admin
     - _Requirements: 15.1, 15.2, 15.3, 16.1, 16.2, 16.3, 16.4, 16.5_
 
-  - [ ] 13.2 Create criteria breakdown component
+  - [x] 13.2 Create criteria breakdown component
     - Create `src/components/peer-review/CriteriaBreakdown.tsx`
     - Display score for each criterion with visual indicator
     - Show criterion labels and descriptions
     - Use color coding for score ranges
     - _Requirements: 16.2_
 
-  - [ ] 13.3 Create reviewer comments component
+  - [x] 13.3 Create reviewer comments component
     - Create `src/components/peer-review/ReviewerComments.tsx`
     - Display each comment in a card
     - Anonymize reviewer identity (show as "Reviewer 1", "Reviewer 2", etc.)
     - _Requirements: 16.3_
 
-  - [ ] 13.4 Integrate results into submission detail page
+  - [x] 13.4 Integrate results into submission detail page
     - Update submission detail page to include PeerReviewResults component
     - Check if peer_verification_result exists and results visibility is enabled
     - Render component if conditions met
@@ -428,8 +428,8 @@ This implementation plan breaks down the Peer Review Phase into discrete, manage
     - _Requirements: 16.1, 16.2, 16.3, 16.4, 16.5_
 
 
-- [ ] 14. Admin Dashboard - Monitoring
-  - [ ] 14.1 Create admin peer review dashboard page
+- [x] 14. Admin Dashboard - Monitoring
+  - [x] 14.1 Create admin peer review dashboard page
     - Create `src/app/admin/peer-review/page.tsx`
     - Verify admin authentication
     - Display peer review statistics
@@ -437,14 +437,14 @@ This implementation plan breaks down the Peer Review Phase into discrete, manage
     - Show submission review table
     - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.5_
 
-  - [ ] 14.2 Create statistics grid component
+  - [x] 14.2 Create statistics grid component
     - Create `src/components/admin/PeerReviewStats.tsx`
     - Display total assignments, completed reviews, pending reviews
     - Display completion rate percentage
     - Display at-risk reviewers count
     - _Requirements: 19.1, 19.2, 19.3, 19.4_
 
-  - [ ] 14.3 Create reviewer activity table component
+  - [x] 14.3 Create reviewer activity table component
     - Create `src/components/admin/ReviewerActivityTable.tsx`
     - Display reviewer list with completion statistics
     - Show completion rate per reviewer
@@ -452,14 +452,14 @@ This implementation plan breaks down the Peer Review Phase into discrete, manage
     - Provide reassign action button
     - _Requirements: 19.3, 19.4_
 
-  - [ ] 14.4 Create submission review table component
+  - [x] 14.4 Create submission review table component
     - Create `src/components/admin/SubmissionReviewTable.tsx`
     - Display submissions with review counts
     - Show submissions with insufficient reviews
     - Provide view details link
     - _Requirements: 19.5_
 
-  - [ ] 14.5 Create admin API routes
+  - [x] 14.5 Create admin API routes
     - Create `/api/admin/peer-review/stats` route
     - Create `/api/admin/peer-review/reviewers` route
     - Create `/api/admin/peer-review/submissions` route
@@ -467,8 +467,8 @@ This implementation plan breaks down the Peer Review Phase into discrete, manage
     - Return aggregated data for dashboard
     - _Requirements: 19.1, 19.2, 19.3, 19.4, 19.5_
 
-- [ ] 15. Admin Dashboard - Configuration
-  - [ ] 15.1 Create configuration panel component
+- [x] 15. Admin Dashboard - Configuration
+  - [x] 15.1 Create configuration panel component
     - Create `src/components/admin/PeerReviewConfig.tsx`
     - Display deadline configuration input (days)
     - Display finalist count configuration input
@@ -476,14 +476,14 @@ This implementation plan breaks down the Peer Review Phase into discrete, manage
     - Implement save handlers for each setting
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 15.1, 15.2, 15.3, 15.4, 17.1, 17.2_
 
-  - [ ] 15.2 Create configuration API routes
+  - [x] 15.2 Create configuration API routes
     - Create `/api/admin/peer-review/config` route (GET and PUT)
     - Verify admin authentication
     - Store configuration in contest settings or separate config table
     - Log all configuration changes
     - _Requirements: 6.1, 6.2, 6.3, 15.1, 15.2, 15.3, 17.1, 17.2_
 
-  - [ ] 15.3 Create phase end button component
+  - [x] 15.3 Create phase end button component
     - Create button to trigger phase end processing
     - Require confirmation modal before execution
     - Show loading state during processing
@@ -492,8 +492,8 @@ This implementation plan breaks down the Peer Review Phase into discrete, manage
     - _Requirements: 25.1, 25.2, 25.3, 25.4, 25.5_
 
 
-- [ ] 16. Admin Tools - Manual Intervention
-  - [ ] 16.1 Create manual reassignment functionality
+- [x] 16. Admin Tools - Manual Intervention
+  - [x] 16.1 Create manual reassignment functionality
     - Create `/api/admin/peer-review/reassign` route
     - Allow admin to manually reassign a specific assignment
     - Select new reviewer from eligible pool
@@ -503,7 +503,7 @@ This implementation plan breaks down the Peer Review Phase into discrete, manage
     - Log admin action in audit_logs
     - _Requirements: 20.1, 20.2, 20.3, 20.4, 20.5_
 
-  - [ ] 16.2 Create score override functionality
+  - [x] 16.2 Create score override functionality
     - Create `/api/admin/peer-review/override-score` route
     - Allow admin to manually edit individual review scores
     - Require written justification
@@ -512,7 +512,7 @@ This implementation plan breaks down the Peer Review Phase into discrete, manage
     - Send notification email to submission author
     - _Requirements: 21.1, 21.2, 21.3, 21.4, 21.5_
 
-  - [ ] 16.3 Create admin override UI
+  - [x] 16.3 Create admin override UI
     - Add "Reassign" button to reviewer activity table
     - Add "Override Score" button to submission review details
     - Create modal with reviewer selection for reassignment
@@ -521,36 +521,36 @@ This implementation plan breaks down the Peer Review Phase into discrete, manage
     - Show success/error message
     - _Requirements: 20.1, 20.2, 21.1, 21.2_
 
-- [ ] 17. Email Templates
-  - [ ] 17.1 Create deadline warning email template
+- [x] 17. Email Templates
+  - [x] 17.1 Create deadline warning email template
     - Design HTML email template
     - Include assignment count and deadline (24 hours)
     - Include link to reviewer dashboard
     - Add plain text version
     - _Requirements: 22.2_
 
-  - [ ] 17.2 Create disqualification notice email template
+  - [x] 17.2 Create disqualification notice email template
     - Design HTML email template
     - Explain reason for disqualification (incomplete reviews)
     - Include submission code and title
     - Add plain text version
     - _Requirements: 22.3_
 
-  - [ ] 17.3 Create results available email template
+  - [x] 17.3 Create results available email template
     - Design HTML email template
     - Notify author that peer review results are now visible
     - Include link to submission detail page
     - Add plain text version
     - _Requirements: 22.4_
 
-  - [ ] 17.4 Create reassignment notification email template
+  - [x] 17.4 Create reassignment notification email template
     - Design HTML email template
     - Notify reviewer of new assignment due to expiration
     - Include deadline and link to review
     - Add plain text version
     - _Requirements: 22.5_
 
-  - [ ] 17.5 Implement email sending functions
+  - [x] 17.5 Implement email sending functions
     - Create `sendDeadlineWarningEmail()` in `src/lib/email.ts`
     - Create `sendDisqualificationEmail()` in `src/lib/email.ts`
     - Create `sendResultsAvailableEmail()` in `src/lib/email.ts`
@@ -559,51 +559,51 @@ This implementation plan breaks down the Peer Review Phase into discrete, manage
     - _Requirements: 22.1, 22.2, 22.3, 22.4, 22.5_
 
 
-- [ ] 18. Testing and Validation
-  - [ ] 18.1 Write property test for eligible submission selection
+- [x] 18. Testing and Validation
+  - [x] 18.1 Write property test for eligible submission selection
     - **Property 1: Eligible Submission Selection**
     - **Validates: Requirements 1.2, 1.3, 1.4**
     - Generate random submissions with various statuses
     - Verify only SUBMITTED and REINSTATED are selected
 
-  - [ ] 18.2 Write property test for eligible reviewer selection
+  - [x] 18.2 Write property test for eligible reviewer selection
     - **Property 2: Eligible Reviewer Selection**
     - **Validates: Requirements 1.5**
     - Generate random users with various submission statuses
     - Verify only users with eligible submissions are selected
 
-  - [ ] 18.3 Write property test for assignment count
+  - [x] 18.3 Write property test for assignment count
     - **Property 3: Assignment Count Per Reviewer**
     - **Validates: Requirements 3.1**
     - Generate random reviewers and submissions
     - Verify each reviewer has exactly 10 assignments (or fewer if insufficient)
 
-  - [ ] 18.4 Write property test for no self-review
+  - [x] 18.4 Write property test for no self-review
     - **Property 4: No Self-Review**
     - **Validates: Requirements 3.3**
     - Generate random assignments
     - Verify no assignment has matching reviewer and submission author
 
-  - [ ] 18.5 Write property test for balanced distribution
+  - [x] 18.5 Write property test for balanced distribution
     - **Property 7: Balanced Review Distribution**
     - **Validates: Requirements 4.1, 4.2, 4.3**
     - Generate random reviewers and submissions
     - Verify review count variance is minimized
 
-  - [ ] 18.6 Write unit tests for review validation
+  - [x] 18.6 Write unit tests for review validation
     - Test ownership validation (reject if user doesn't own assignment)
     - Test status validation (reject if not PENDING)
     - Test expiration validation (reject if past deadline)
     - _Requirements: 10.1, 10.2, 10.3_
 
-  - [ ] 18.7 Write unit tests for score calculation
+  - [x] 18.7 Write unit tests for score calculation
     - Test trimmed mean with 5+ reviews
     - Test simple mean with <5 reviews
     - Test four-criteria average
     - Test edge cases (all same scores, extreme outliers)
     - _Requirements: 13.1, 13.2, 13.3, 13.4_
 
-  - [ ] 18.8 Perform manual testing
+  - [x] 18.8 Perform manual testing
     - Test with small contest (10 submissions, 10 reviewers)
     - Test with medium contest (50 submissions, 50 reviewers)
     - Test assignment balance

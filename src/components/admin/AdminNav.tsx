@@ -14,6 +14,7 @@ export default function AdminNav() {
     { href: "/admin/cms/pages", label: "Pages" },
     { href: "/admin/posts", label: "Posts" },
     { href: "/admin/contests", label: "Contests" },
+    { href: "/admin/peer-review", label: "Peer Review" },
     { href: "/admin/peer-verification", label: "Peer Verification" },
     { href: "/admin/cms/settings", label: "Settings" },
   ];

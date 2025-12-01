@@ -215,17 +215,20 @@ export async function checkSubmissionReviewCompletion(
  */
 export async function triggerScoreCalculation(submissionId: string): Promise<void> {
   try {
-    console.log(`Triggering score calculation for submission ${submissionId}`);
+    console.log(`🎯 [triggerScoreCalculation] Starting for submission ${submissionId}`);
     
     // Import scoring service dynamically (implemented in task 9)
+    console.log(`📦 [triggerScoreCalculation] Importing scoring-service module...`);
     const { calculatePeerScore } = await import('./scoring-service');
+    console.log(`✓ [triggerScoreCalculation] Module imported successfully`);
     
     // Calculate and store the score
+    console.log(`🧮 [triggerScoreCalculation] Calling calculatePeerScore...`);
     const score = await calculatePeerScore(submissionId);
     
-    console.log(`✓ Score calculated for submission ${submissionId}: ${score.toFixed(2)}`);
+    console.log(`✅ [triggerScoreCalculation] Score calculated for submission ${submissionId}: ${score.toFixed(2)}`);
   } catch (error) {
-    console.error('Error in triggerScoreCalculation:', error);
+    console.error(`❌ [triggerScoreCalculation] Error for submission ${submissionId}:`, error);
     // Don't throw - this is async and shouldn't fail the review submission
   }
 }

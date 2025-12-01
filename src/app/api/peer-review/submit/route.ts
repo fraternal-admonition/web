@@ -104,14 +104,23 @@ export async function POST(request: Request) {
     }
 
     // 9. Check if all reviews are complete for this submission
+    console.log(`🔍 Checking completion status for submission ${assignment.submission_id}`);
     const completion = await checkSubmissionReviewCompletion(assignment.submission_id);
+    console.log(`📊 Completion check result:`, {
+      complete: completion.complete,
+      reviewCount: completion.reviewCount,
+      totalExpected: completion.totalExpected,
+      submissionId: assignment.submission_id
+    });
 
     // 10. If all reviews complete, trigger score calculation asynchronously
     if (completion.complete) {
-      console.log(`All reviews complete for submission ${assignment.submission_id}, triggering score calculation`);
+      console.log(`✅ All reviews complete for submission ${assignment.submission_id}, triggering score calculation`);
       triggerScoreCalculation(assignment.submission_id).catch(err => {
-        console.error('Error triggering score calculation:', err);
+        console.error('❌ Error triggering score calculation:', err);
       });
+    } else {
+      console.log(`⏳ Not all reviews complete yet: ${completion.reviewCount}/${completion.totalExpected} done`);
     }
 
     return NextResponse.json({

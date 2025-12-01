@@ -223,9 +223,10 @@ export async function reassignExpiredAssignments(): Promise<ReassignmentResult> 
         
         if (email) {
           // Send reassignment notification email
-          const { sendPeerReviewReassignmentEmail } = await import('@/lib/email');
-          await sendPeerReviewReassignmentEmail(email, {
+          const { sendPeerReviewAssignmentEmail } = await import('@/lib/email');
+          await sendPeerReviewAssignmentEmail(email, {
             reviewer_name: newReviewer.display_id,
+            assignment_count: 1,
             deadline: newDeadline.toISOString()
           }).catch(emailError => {
             console.error(`[reassignExpiredAssignments] Error sending email to ${newReviewer.display_id}:`, emailError);
@@ -331,10 +332,10 @@ export async function sendDeadlineWarnings(): Promise<WarningResult> {
         const deadline = assignments[0].deadline;
         
         // Send warning email
-        const { sendPeerReviewDeadlineWarningEmail } = await import('@/lib/email');
+        const { sendPeerReviewDeadlineWarningEmail } = await import('@/lib/peer-review/email-templates');
         const result = await sendPeerReviewDeadlineWarningEmail(email, {
           reviewer_name: user?.display_id,
-          assignment_count: assignments.length,
+          pending_count: assignments.length,
           deadline
         });
         

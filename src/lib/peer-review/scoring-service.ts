@@ -22,6 +22,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createAdminClient } from '@supabase/supabase-js';
 
 // ============================================================================
 // Types and Interfaces
@@ -247,6 +248,8 @@ export function calculateOverallScore(
  * Stores the calculated peer score in submissions.score_peer column.
  * Also updates the updated_at timestamp.
  * 
+ * Uses admin client to bypass RLS policies.
+ * 
  * @param submissionId - UUID of the submission
  * @param score - The calculated peer score (0-5)
  */
@@ -254,10 +257,25 @@ async function updateSubmissionScore(
   submissionId: string,
   score: number
 ): Promise<void> {
-  const supabase = await createClient();
+  // Use admin client to bypass RLS - scoring service needs elevated permissions
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  
+  if (!supabaseServiceKey) {
+    console.error('❌ SUPABASE_SERVICE_ROLE_KEY not found in environment');
+    throw new Error('Missing service role key');
+  }
+
+  const adminClient = createAdminClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
 
   try {
-    const { error } = await supabase
+    console.log(`   🔧 Updating score using admin client...`);
+    const { error } = await adminClient
       .from('submissions')
       .update({
         score_peer: score,
@@ -266,13 +284,13 @@ async function updateSubmissionScore(
       .eq('id', submissionId);
 
     if (error) {
-      console.error('Error updating submission score:', error);
+      console.error('❌ Error updating submission score:', error);
       throw error;
     }
 
-    console.log(`   ✓ Updated submissions.score_peer = ${score.toFixed(2)}`);
+    console.log(`   ✅ Updated submissions.score_peer = ${score.toFixed(2)}`);
   } catch (error) {
-    console.error('Error in updateSubmissionScore:', error);
+    console.error('❌ Error in updateSubmissionScore:', error);
     throw error;
   }
 }
