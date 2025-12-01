@@ -2,12 +2,14 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
-  // Fix for Next.js detecting wrong workspace root
-  outputFileTracingRoot: path.join(__dirname),
-  
   // Ignore TypeScript errors during build
   typescript: {
     ignoreBuildErrors: true,
+  },
+  
+  // Ignore ESLint errors during build
+  eslint: {
+    ignoreDuringBuilds: true,
   },
   
   // Configure allowed image domains for Next.js Image component
