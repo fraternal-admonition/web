@@ -141,6 +141,15 @@ export async function reassignExpiredAssignments(): Promise<{
             return { data: blacklisted };
           });
         
+        // Get users who have submitted to this contest
+        const { data: contestParticipants } = await supabase
+          .from('submissions')
+          .select('user_id')
+          .eq('contest_id', contestId)
+          .in('status', ['SUBMITTED', 'ELIMINATED']);
+        
+        const participantIds = contestParticipants?.map(p => p.user_id) || [];
+        
         // Get eligible reviewers
         const { data: eligibleReviewers, error: reviewerError } = await supabase
           .from('users')
@@ -148,12 +157,7 @@ export async function reassignExpiredAssignments(): Promise<{
           .eq('is_banned', false)
           .neq('id', authorUserId)
           .not('id', 'in', `(${blacklistedReviewers?.join(',') || 'null'})`)
-          .in('id', supabase
-            .from('submissions')
-            .select('user_id')
-            .eq('contest_id', contestId)
-            .in('status', ['SUBMITTED', 'ELIMINATED'])
-          );
+          .in('id', participantIds);
         
         if (reviewerError || !eligibleReviewers || eligibleReviewers.length === 0) {
           console.warn(`[reassignExpiredAssignments] No eligible reviewers for assignment ${assignment.id}`);
