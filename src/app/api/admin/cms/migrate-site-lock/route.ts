@@ -8,6 +8,9 @@ import { checkAdminAuth } from '@/lib/admin-auth';
 import { migrateSiteLockSettings, checkMigrationNeeded } from '@/lib/cms/migrate-site-lock';
 import { settingsCache } from '@/lib/cms/settings-cache';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     // Check admin authentication

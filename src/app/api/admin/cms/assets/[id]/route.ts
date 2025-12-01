@@ -3,6 +3,9 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { checkAdminAuth } from "@/lib/admin-auth";
 import { logAuditEvent, getIPAddress, getUserAgent } from "@/lib/security/audit-log";
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

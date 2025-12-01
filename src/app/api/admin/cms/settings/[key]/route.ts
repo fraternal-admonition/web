@@ -8,6 +8,9 @@ import { settingsCache } from "@/lib/cms/settings-cache";
 import { hashPassword } from "@/lib/security/password-hash";
 import { invalidateAllPasswordSessions } from "@/lib/security/site-lock-session";
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ key: string }> }

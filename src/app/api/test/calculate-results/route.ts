@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { calculateResults } from '@/lib/peer-verification/results-service';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
     // Only allow in development
     if (process.env.NODE_ENV === 'production') {

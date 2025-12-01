@@ -9,6 +9,9 @@ import { verifyPassword } from '@/lib/security/password-hash';
 import { createPasswordSession } from '@/lib/security/site-lock-session';
 import { rateLimiter } from '@/lib/security/rate-limit';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting: 5 attempts per 15 minutes per IP

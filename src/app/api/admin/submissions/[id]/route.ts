@@ -2,6 +2,9 @@ import { createClient, createAdminClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { verifyAdminRole, logAdminScreeningAccess } from "@/lib/ai-screening/security";
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 interface RouteParams {
   params: Promise<{
     id: string;

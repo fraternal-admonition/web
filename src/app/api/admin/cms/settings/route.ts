@@ -6,6 +6,9 @@ import { logAuditEvent, getIPAddress, getUserAgent } from "@/lib/security/audit-
 import { getAllSettings } from "@/lib/cms/settings-service";
 import { settingsCache } from "@/lib/cms/settings-cache";
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const auth = await checkAdminAuth();

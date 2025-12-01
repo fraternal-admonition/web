@@ -5,6 +5,9 @@ import { sanitizeHTML } from "@/lib/security/sanitize";
 import { CMSPageSchema } from "@/lib/security/validators";
 import { logAuditEvent, getIPAddress, getUserAgent } from "@/lib/security/audit-log";
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

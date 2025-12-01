@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { executeImmediateAssignment } from '@/lib/peer-verification/immediate-assignment-service';
 import { createAdminClient } from '@/lib/supabase/server';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
   // Only allow in development
   if (process.env.NODE_ENV === 'production') {

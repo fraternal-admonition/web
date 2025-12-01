@@ -3,6 +3,9 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { checkAdminAuth } from "@/lib/admin-auth";
 import { IllustrationSchema } from "@/lib/security/validators";
 import {
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
   logAuditEvent,
   getIPAddress,
   getUserAgent,

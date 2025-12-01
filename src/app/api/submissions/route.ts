@@ -6,6 +6,9 @@ import { getSubmissionPhaseStatus } from "@/lib/contests/phase-utils";
 import { Contest } from "@/types/contests";
 import { rateLimiter } from "@/lib/security/rate-limit";
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
