@@ -28,8 +28,17 @@ export async function GET(request: Request) {
       );
     }
     
-    if (authHeader !== `Bearer ${cronSecret}`) {
+    const expectedAuth = `Bearer ${cronSecret}`;
+    
+    // Debug logging (remove after testing)
+    console.log('[Cron] Auth header received:', authHeader ? 'present' : 'missing');
+    console.log('[Cron] Auth header length:', authHeader?.length);
+    console.log('[Cron] Expected auth length:', expectedAuth.length);
+    console.log('[Cron] Headers match:', authHeader === expectedAuth);
+    
+    if (authHeader !== expectedAuth) {
       console.error('[Cron] Unauthorized cron request');
+      console.error('[Cron] Expected format: Bearer <secret>');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
