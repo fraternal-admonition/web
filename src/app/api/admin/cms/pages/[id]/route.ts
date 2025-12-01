@@ -69,7 +69,7 @@ export async function PUT(
     const { slug, title, content_rich_json, published, meta_title, meta_description, og_image, excerpt } = validation.data;
 
     // Sanitize HTML content
-    const sanitizedContent = sanitizeHTML(content_rich_json.content);
+    const sanitizedContent = await sanitizeHTML(content_rich_json.content);
 
     // Calculate reading time
     const calculateReadingTime = (html: string): number => {

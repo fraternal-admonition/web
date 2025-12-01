@@ -27,7 +27,7 @@ export async function POST(
     if (draft_content_json?.content) {
       sanitizedDraftContent = {
         ...draft_content_json,
-        content: sanitizeHTML(draft_content_json.content),
+        content: await sanitizeHTML(draft_content_json.content),
       };
     }
 

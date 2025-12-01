@@ -31,6 +31,25 @@ const nextConfig: NextConfig = {
     // Increase device sizes for better image optimization
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
   },
+
+  // Webpack configuration to handle jsdom and other server-side dependencies
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // Ignore canvas and jsdom CSS files during build
+      config.externals = config.externals || [];
+      config.externals.push({
+        canvas: 'commonjs canvas',
+      });
+      
+      // Ignore missing CSS files from jsdom
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'jsdom/lib/jsdom/browser/default-stylesheet.css': false,
+      };
+    }
+    
+    return config;
+  },
 };
 
 export default nextConfig;

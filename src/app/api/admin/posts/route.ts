@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Sanitize HTML content
-    const sanitizedContent = sanitizeHTML(content_rich_json.content);
+    const sanitizedContent = await sanitizeHTML(content_rich_json.content);
 
     // Calculate reading time if mode is 'auto'
     let finalReadingTimeValue = reading_time_value || 0;

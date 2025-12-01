@@ -1,11 +1,12 @@
-import DOMPurify from "isomorphic-dompurify";
-
 /**
  * Sanitizes HTML content to prevent XSS attacks
  * Removes potentially dangerous tags and attributes while preserving safe formatting
  */
-export function sanitizeHTML(html: string): string {
+export async function sanitizeHTML(html: string): Promise<string> {
   if (!html) return "";
+
+  // Lazy load DOMPurify only when needed (not during build)
+  const DOMPurify = (await import("isomorphic-dompurify")).default;
 
   // Configure DOMPurify with allowed tags and attributes
   const config = {

@@ -175,7 +175,7 @@ export async function PUT(
     }
 
     // Sanitize HTML content
-    const sanitizedContent = sanitizeHTML(content_rich_json.content);
+    const sanitizedContent = await sanitizeHTML(content_rich_json.content);
 
     // Calculate reading time if mode is 'auto' and content changed
     let finalReadingTimeValue = reading_time_value || 0;

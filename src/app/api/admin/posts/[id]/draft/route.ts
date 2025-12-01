@@ -50,7 +50,7 @@ export async function POST(
     let sanitizedDraftContent = {};
     if (draft_content_json?.content) {
       sanitizedDraftContent = {
-        content: sanitizeHTML(draft_content_json.content),
+        content: await sanitizeHTML(draft_content_json.content),
       };
     }
 
