@@ -5,7 +5,7 @@
  * 1. Find assignments with deadlines in 23-24 hours
  * 2. Send warning emails to reviewers
  * 
- * Schedule: Every 6 hours (0 */6 * * *)
+ * Schedule: Every 6 hours
  * External Service: cron-job.org
  */
 

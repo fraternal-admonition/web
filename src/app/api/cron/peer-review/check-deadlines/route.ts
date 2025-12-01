@@ -5,7 +5,7 @@
  * 1. Mark expired assignments as EXPIRED
  * 2. Reassign expired assignments to new reviewers
  * 
- * Schedule: Every hour (0 * * * *)
+ * Schedule: Every hour
  * External Service: cron-job.org
  */
 
